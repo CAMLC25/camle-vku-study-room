@@ -15,7 +15,7 @@ export const ENV: AppConfig = {
   appDataMode: (process.env.EXPO_PUBLIC_APP_DATA_MODE as AppDataMode) || 'mock',
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://vku-study-room.supabase.co',
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'mock-anon-key-vku',
-  defaultStudentId: 'std-21it-001',
+  defaultStudentId: '00000000-0000-0000-0000-000000000001',
   defaultStudentName: 'Nguyen Van A',
   defaultStudentCode: '21IT001',
   holdDurationSeconds: 90,
