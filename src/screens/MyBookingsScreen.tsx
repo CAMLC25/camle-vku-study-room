@@ -25,6 +25,8 @@ import { outboxService } from '../services/outboxService';
 import { notificationService } from '../services/notificationService';
 import { useTranslation } from '../store/useLanguageStore';
 
+import { showConfirmDialog, showAlertDialog } from '../utils/dialog';
+
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'MyBookings'>,
   NativeStackScreenProps<RootStackParamList>
@@ -78,49 +80,40 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
       const booking = myBookings.find((b) => b.id === bookingId);
       if (!booking) return;
 
-      Alert.alert(
-        t('cancelConfirmTitle'),
-        `${t('cancelConfirmMsg')}\n(${booking.roomName})`,
-        [
-          { text: t('keepReservation'), style: 'cancel' },
-          {
-            text: t('confirmCancelBtn'),
-            style: 'destructive',
-            onPress: async () => {
-              // Cancel local scheduled notification reminder if exists
-              if (booking.notificationId) {
-                notificationService.cancelScheduledReminder(booking.notificationId);
-              }
+      showConfirmDialog({
+        title: t('cancelConfirmTitle'),
+        message: `${t('cancelConfirmMsg')}\n(${booking.roomName})`,
+        cancelText: t('keepReservation'),
+        confirmText: t('confirmCancelBtn'),
+        onConfirm: async () => {
+          // Cancel local scheduled notification reminder if exists
+          if (booking.notificationId) {
+            notificationService.cancelScheduledReminder(booking.notificationId);
+          }
 
-              if (isOffline) {
-                // Queue cancellation in outbox
-                outboxService.queueCancellation(booking);
-                Alert.alert(
-                  t('cancelQueuedTitle'),
-                  t('cancelQueuedMsg'),
-                  [{ text: 'OK' }]
-                );
+          if (isOffline) {
+            // Queue cancellation in outbox
+            outboxService.queueCancellation(booking);
+            showAlertDialog(t('cancelQueuedTitle'), t('cancelQueuedMsg'));
+          } else {
+            // Cancel immediately online
+            try {
+              const res = await bookingService.cancelBooking(
+                bookingId,
+                currentStudentId
+              );
+              if (res.success) {
+                updateBooking(bookingId, { status: 'CANCELLED' });
+                showAlertDialog(t('actionSuccess'), t('cancelSuccess'));
               } else {
-                // Cancel immediately online
-                try {
-                  const res = await bookingService.cancelBooking(
-                    bookingId,
-                    currentStudentId
-                  );
-                  if (res.success) {
-                    updateBooking(bookingId, { status: 'CANCELLED' });
-                    Alert.alert(t('actionSuccess'), t('cancelSuccess'));
-                  } else {
-                    Alert.alert(t('actionError'), res.error || t('errUnknown'));
-                  }
-                } catch (e: any) {
-                  Alert.alert(t('actionError'), e?.message || t('errUnknown'));
-                }
+                showAlertDialog(t('actionError'), res.error || t('errUnknown'));
               }
-            },
-          },
-        ]
-      );
+            } catch (e: any) {
+              showAlertDialog(t('actionError'), e?.message || t('errUnknown'));
+            }
+          }
+        },
+      });
     },
     [myBookings, isOffline, currentStudentId, updateBooking, t]
   );

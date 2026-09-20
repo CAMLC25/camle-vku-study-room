@@ -14,6 +14,7 @@ import { useNetworkStore } from '../store/useNetworkStore';
 import { useTranslation } from '../store/useLanguageStore';
 import { bookingService } from '../services/bookingService';
 import { syncService } from '../services/syncService';
+import { showConfirmDialog, showAlertDialog } from '../utils/dialog';
 import { VKU_QUOTA_LIMITS } from '../types/quota';
 
 // 3 Registered Test Students in Supabase Database
@@ -94,27 +95,22 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleResetData = () => {
-    Alert.alert(
-      t('clearCacheConfirmTitle'),
-      t('clearCacheConfirmMsg'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            await clearAllStorageAndReset();
-            await refreshQuota();
-            Alert.alert(t('resetCompleteTitle'), t('resetCompleteMsg'));
-          },
-        },
-      ]
-    );
+    showConfirmDialog({
+      title: t('clearCacheConfirmTitle'),
+      message: t('clearCacheConfirmMsg'),
+      cancelText: t('cancel'),
+      confirmText: t('confirm'),
+      onConfirm: async () => {
+        await clearAllStorageAndReset();
+        await refreshQuota();
+        showAlertDialog(t('resetCompleteTitle'), t('resetCompleteMsg'));
+      },
+    });
   };
 
   const handleManualSync = async () => {
     if (!isConnected) {
-      Alert.alert(t('offlineAlertTitle'), t('offlineAlertMsg'));
+      showAlertDialog(t('offlineAlertTitle'), t('offlineAlertMsg'));
       return;
     }
     await syncService.flushOutboxSequentially();

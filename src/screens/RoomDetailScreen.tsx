@@ -23,6 +23,7 @@ import { Booking } from '../types/booking';
 import { formatDisplayDate } from '../utils/date';
 import { bookingService } from '../services/bookingService';
 import { notificationService } from '../services/notificationService';
+import { showConfirmDialog, showAlertDialog } from '../utils/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoomDetail'>;
 
@@ -59,16 +60,14 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       if (slot && slot.state === 'AVAILABLE') {
         setModalSlotIndex(slotIndex);
       } else if (slot && slot.state === 'MINE') {
-        Alert.alert(
+        showAlertDialog(
           t('yourReservationTitle'),
-          `${t('yourReservationMsg')}\n${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`,
-          [{ text: 'OK' }]
+          `${t('yourReservationMsg')}\n${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`
         );
       } else if (slot && slot.state === 'HELD_BY_OTHER') {
-        Alert.alert(
+        showAlertDialog(
           t('heldByOtherTitle'),
-          t('heldByOtherMsg'),
-          [{ text: 'OK' }]
+          t('heldByOtherMsg')
         );
       }
     },
@@ -81,17 +80,13 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       addBooking(booking);
 
       if (booking.status === 'PENDING_SYNC') {
-        Alert.alert(
-          t('bookingQueuedOfflineTitle'),
-          `${t('bookingQueuedOfflineMsg')}\n\n${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}`,
-          [
-            {
-              text: t('viewInMyBookings'),
-              onPress: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
-            },
-            { text: 'OK', style: 'cancel' },
-          ]
-        );
+        showConfirmDialog({
+          title: t('bookingQueuedOfflineTitle'),
+          message: `${t('bookingQueuedOfflineMsg')}\n\n${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}`,
+          confirmText: t('viewInMyBookings'),
+          cancelText: t('close'),
+          onConfirm: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
+        });
         return;
       }
 
@@ -119,17 +114,13 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       // Refresh slot states
       await refresh();
 
-      Alert.alert(
-        isReplay ? t('bookingAlreadyActiveTitle') : t('reservationConfirmedTitle'),
-        `${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}\n${t('bookingDate')}: ${formatDisplayDate(booking.bookingDate)}\n${t('bookingTime')}: ${TIME_SLOT_DEFINITIONS[booking.slotIndex].label}`,
-        [
-          {
-            text: t('viewInMyBookings'),
-            onPress: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
-          },
-          { text: t('close'), style: 'cancel' },
-        ]
-      );
+      showConfirmDialog({
+        title: isReplay ? t('bookingAlreadyActiveTitle') : t('reservationConfirmedTitle'),
+        message: `${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}\n${t('bookingDate')}: ${formatDisplayDate(booking.bookingDate)}\n${t('bookingTime')}: ${TIME_SLOT_DEFINITIONS[booking.slotIndex].label}`,
+        confirmText: t('viewInMyBookings'),
+        cancelText: t('close'),
+        onConfirm: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
+      });
     },
     [addBooking, updateBooking, currentStudentId, selectedDate, setQuotaUsage, refresh, navigation, t, language]
   );
