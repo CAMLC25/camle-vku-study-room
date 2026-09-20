@@ -59,6 +59,7 @@ interface BookingStoreState {
 }
 
 import { getTodayDateString } from '../utils/date';
+import { ensureStudentUuid, DEFAULT_STUDENT_UUID } from '../utils/uuid';
 
 const memoryStorage = new Map<string, string>();
 
@@ -235,12 +236,15 @@ export const useBookingStore = create<BookingStoreState>()(
 
       clearAllStorageAndReset: async () => {
         set({
+          currentStudentId: DEFAULT_STUDENT_UUID,
+          currentStudentName: 'Nguyen Van A',
+          currentStudentCode: '21IT001',
           myBookings: [],
           activeHold: null,
           outbox: [],
           availabilityCache: {},
           quotaUsage: {
-            studentId: get().currentStudentId,
+            studentId: DEFAULT_STUDENT_UUID,
             dailyUsage: 0,
             weeklyUsage: 0,
             activeFutureCount: 0,
@@ -257,6 +261,13 @@ export const useBookingStore = create<BookingStoreState>()(
     {
       name: 'vku-booking-storage',
       storage: createJSONStorage(() => safeAsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.currentStudentId = ensureStudentUuid(state.currentStudentId);
+          state.currentStudentCode = state.currentStudentCode || '21IT001';
+          state.currentStudentName = state.currentStudentName || 'Nguyen Van A';
+        }
+      },
       partialize: (state) => ({
         currentStudentId: state.currentStudentId,
         currentStudentName: state.currentStudentName,

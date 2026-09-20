@@ -13,6 +13,7 @@ import {
 import { StudentQuotaUsage, VKU_QUOTA_LIMITS } from '../../types/quota';
 import { supabase } from './client';
 import { getTodayDateString } from '../../utils/date';
+import { ensureStudentUuid } from '../../utils/uuid';
 
 export class SupabaseBookingService implements IBookingService {
   async getAvailability(
@@ -20,6 +21,7 @@ export class SupabaseBookingService implements IBookingService {
     date: string,
     studentId: string
   ): Promise<DayRoomAvailability> {
+    const validStudentId = ensureStudentUuid(studentId);
     const nowIso = new Date().toISOString();
 
     // 1. Fetch confirmed bookings for room and date
@@ -59,7 +61,7 @@ export class SupabaseBookingService implements IBookingService {
       if (b) {
         slots[idx] = {
           slotIndex: idx,
-          state: b.student_id === studentId ? 'MINE' : 'BOOKED',
+          state: b.student_id === validStudentId ? 'MINE' : 'BOOKED',
           bookedByStudentId: b.student_id,
           bookingId: b.id,
         };
@@ -70,7 +72,7 @@ export class SupabaseBookingService implements IBookingService {
       if (h) {
         slots[idx] = {
           slotIndex: idx,
-          state: h.student_id === studentId ? 'MINE' : 'HELD_BY_OTHER',
+          state: h.student_id === validStudentId ? 'MINE' : 'HELD_BY_OTHER',
           holdExpiresAt: h.expires_at,
         };
       }
@@ -90,11 +92,12 @@ export class SupabaseBookingService implements IBookingService {
     slotIndex: SlotIndex,
     studentId: string
   ): Promise<{ success: boolean; hold?: BookingHold; error?: string }> {
+    const validStudentId = ensureStudentUuid(studentId);
     const { data, error } = await supabase.rpc('create_slot_hold', {
       p_room_id: roomId,
       p_booking_date: date,
       p_slot_index: slotIndex,
-      p_student_id: studentId,
+      p_student_id: validStudentId,
       p_duration_seconds: 90,
     });
 
@@ -122,9 +125,10 @@ export class SupabaseBookingService implements IBookingService {
   }
 
   async bookSlot(request: BookingRequest): Promise<BookingResult> {
+    const validStudentId = ensureStudentUuid(request.studentId);
     // Single PostgreSQL stored procedure transaction: book_slot()
     const { data, error } = await supabase.rpc('book_slot', {
-      p_student_id: request.studentId,
+      p_student_id: validStudentId,
       p_room_id: request.roomId,
       p_booking_date: request.bookingDate,
       p_slot_index: request.slotIndex,
@@ -180,11 +184,12 @@ export class SupabaseBookingService implements IBookingService {
     bookingId: string,
     studentId: string
   ): Promise<{ success: boolean; error?: string }> {
+    const validStudentId = ensureStudentUuid(studentId);
     const { error } = await supabase
       .from('bookings')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', bookingId)
-      .eq('student_id', studentId);
+      .eq('student_id', validStudentId);
 
     if (error) {
       return { success: false, error: error.message };
@@ -193,6 +198,7 @@ export class SupabaseBookingService implements IBookingService {
   }
 
   async getMyBookings(studentId: string): Promise<Booking[]> {
+    const validStudentId = ensureStudentUuid(studentId);
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -210,7 +216,7 @@ export class SupabaseBookingService implements IBookingService {
           floor
         )
       `)
-      .eq('student_id', studentId)
+      .eq('student_id', validStudentId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -224,7 +230,7 @@ export class SupabaseBookingService implements IBookingService {
       roomName: row.rooms?.name || 'Room',
       building: row.rooms?.building || 'A',
       floor: row.rooms?.floor || 1,
-      studentId,
+      studentId: validStudentId,
       bookingDate: row.booking_date,
       slotIndex: row.slot_index,
       idempotencyKey: row.idempotency_key,
@@ -238,15 +244,16 @@ export class SupabaseBookingService implements IBookingService {
     studentId: string,
     targetDate?: string
   ): Promise<StudentQuotaUsage> {
+    const validStudentId = ensureStudentUuid(studentId);
     const dateStr = targetDate || getTodayDateString();
     const { data, error } = await supabase.rpc('get_student_quota', {
-      p_student_id: studentId,
+      p_student_id: validStudentId,
       p_booking_date: dateStr,
     });
 
     if (error || !data) {
       return {
-        studentId,
+        studentId: validStudentId,
         dailyUsage: 0,
         weeklyUsage: 0,
         activeFutureCount: 0,
@@ -257,7 +264,7 @@ export class SupabaseBookingService implements IBookingService {
     }
 
     return {
-      studentId,
+      studentId: validStudentId,
       dailyUsage: data.daily_usage,
       weeklyUsage: data.weekly_usage,
       activeFutureCount: data.active_future_count,
