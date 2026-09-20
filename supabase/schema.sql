@@ -264,6 +264,26 @@ BEGIN
 END;
 $$;
 
+-- B2. Release Soft Hold Manually
+CREATE OR REPLACE FUNCTION release_slot_hold(
+    p_hold_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE booking_holds
+    SET status = 'expired',
+        expires_at = NOW()
+    WHERE id = p_hold_id;
+
+    DELETE FROM booking_holds WHERE id = p_hold_id;
+
+    RETURN jsonb_build_object('success', true);
+END;
+$$;
+
 -- C. SINGLE CENTRAL BOOKING FUNCTION: book_slot()
 -- Executes atomic advisory locking, horizon check, idempotency check, quota checks, hold conversion, and insertion
 CREATE OR REPLACE FUNCTION book_slot(
@@ -484,8 +504,11 @@ CREATE POLICY "Service booking mutations" ON bookings FOR ALL USING (true);
 CREATE POLICY "Service hold mutations" ON booking_holds FOR ALL USING (true);
 
 -- ============================================================
--- REALTIME PUBLICATION SETUP
+-- REALTIME PUBLICATION SETUP & REPLICA IDENTITY
 -- ============================================================
+ALTER TABLE bookings REPLICA IDENTITY FULL;
+ALTER TABLE booking_holds REPLICA IDENTITY FULL;
+
 DO $$
 BEGIN
     IF EXISTS (

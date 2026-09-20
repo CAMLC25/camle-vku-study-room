@@ -121,7 +121,18 @@ export class SupabaseBookingService implements IBookingService {
   }
 
   async releaseHold(holdId: string): Promise<void> {
-    await supabase.from('booking_holds').delete().eq('id', holdId);
+    try {
+      await supabase
+        .from('booking_holds')
+        .update({
+          status: 'expired',
+          expires_at: new Date(Date.now() - 1000).toISOString(),
+        })
+        .eq('id', holdId);
+      await supabase.from('booking_holds').delete().eq('id', holdId);
+    } catch (err) {
+      console.warn('Failed to release hold:', err);
+    }
   }
 
   async bookSlot(request: BookingRequest): Promise<BookingResult> {

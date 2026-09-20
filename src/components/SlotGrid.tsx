@@ -12,6 +12,7 @@ import { useTranslation } from '../store/useLanguageStore';
 interface SlotGridProps {
   slots: Record<SlotIndex, SlotAvailability>;
   onSelectSlot: (slotIndex: SlotIndex) => void;
+  onRefresh?: () => void;
   onSimulateRemoteBooking?: (slotIndex: SlotIndex) => void;
   isSimulateAllowed?: boolean;
 }
@@ -21,6 +22,7 @@ const SLOT_INDICES: SlotIndex[] = [0, 1, 2, 3];
 export const SlotGrid: React.FC<SlotGridProps> = ({
   slots,
   onSelectSlot,
+  onRefresh,
   onSimulateRemoteBooking,
   isSimulateAllowed = true,
 }) => {
@@ -41,7 +43,9 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
               key={idx}
               slotIndex={idx}
               state={slot.state}
+              holdExpiresAt={slot.holdExpiresAt}
               onPress={onSelectSlot}
+              onHoldExpired={() => onRefresh?.()}
             />
           );
         })}

@@ -54,6 +54,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
   const [quota, setQuota] = useState<StudentQuotaUsage | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdRef = useRef<BookingHold | null>(null);
   const slotDef = TIME_SLOT_DEFINITIONS[slotIndex];
 
   // 1. Initial Hold Creation & Quota Fetch
@@ -84,7 +85,9 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
         return;
       }
 
-      setHold(holdRes.hold || null);
+      const activeHold = holdRes.hold || null;
+      setHold(activeHold);
+      holdRef.current = activeHold;
       setIsHolding(false);
     } catch (err: any) {
       setDomainError(mapErrorToDomain(err));
@@ -98,12 +101,20 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
       initiateHold();
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (holdRef.current) {
+        bookingService.releaseHold(holdRef.current.id).catch(() => {});
+        holdRef.current = null;
+      }
       setHold(null);
       setDomainError(null);
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (holdRef.current) {
+        bookingService.releaseHold(holdRef.current.id).catch(() => {});
+        holdRef.current = null;
+      }
     };
   }, [visible, initiateHold]);
 
@@ -127,15 +138,18 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
 
   // 3. Clean release hold on dismiss
   const handleDismiss = useCallback(async () => {
-    if (hold && secondsRemaining > 0) {
+    const currentHold = hold || holdRef.current;
+    if (currentHold) {
       try {
-        await bookingService.releaseHold(hold.id);
+        await bookingService.releaseHold(currentHold.id);
       } catch (e) {
         console.warn('Failed to release hold on modal dismiss', e);
       }
     }
+    holdRef.current = null;
+    setHold(null);
     onClose();
-  }, [hold, secondsRemaining, onClose]);
+  }, [hold, onClose]);
 
   const { isConnected, isSimulatedOffline } = useNetworkStatus();
   const isOffline = !isConnected || isSimulatedOffline;
@@ -190,6 +204,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
         return;
       }
 
+      holdRef.current = null;
       setIsConfirming(false);
       onSuccess(result.booking, result.isReplay || false);
     } catch (err: any) {

@@ -31,16 +31,19 @@ export class SupabaseRealtimeService implements IRealtimeService {
         },
         (payload) => {
           const row: any = payload.new || payload.old;
-          if (row && row.booking_date === date) {
+          const isCancelled =
+            payload.eventType === 'DELETE' ||
+            (row && (row.status === 'cancelled' || row.status === 'rejected'));
+
+          // On DELETE, row might only contain { id } if replica identity wasn't full.
+          // Trigger refresh if booking_date matches OR is undefined on DELETE.
+          if (!row || !row.booking_date || row.booking_date === date) {
             callback({
-              type:
-                payload.eventType === 'DELETE' || row.status === 'cancelled'
-                  ? 'BOOKING_CANCELLED'
-                  : 'BOOKING_CREATED',
+              type: isCancelled ? 'BOOKING_CANCELLED' : 'BOOKING_CREATED',
               roomId,
               date,
-              slotIndex: row.slot_index,
-              studentId: row.student_id,
+              slotIndex: row?.slot_index ?? 0,
+              studentId: row?.student_id ?? '',
             });
           }
         }
@@ -55,16 +58,18 @@ export class SupabaseRealtimeService implements IRealtimeService {
         },
         (payload) => {
           const row: any = payload.new || payload.old;
-          if (row && row.booking_date === date) {
+          const isReleased =
+            payload.eventType === 'DELETE' ||
+            (row && (row.status === 'expired' || row.status === 'cancelled'));
+
+          // Trigger refresh if booking_date matches OR is undefined on DELETE.
+          if (!row || !row.booking_date || row.booking_date === date) {
             callback({
-              type:
-                payload.eventType === 'DELETE'
-                  ? 'HOLD_EXPIRED'
-                  : 'HOLD_CREATED',
+              type: isReleased ? 'HOLD_EXPIRED' : 'HOLD_CREATED',
               roomId,
               date,
-              slotIndex: row.slot_index,
-              studentId: row.student_id,
+              slotIndex: row?.slot_index ?? 0,
+              studentId: row?.student_id ?? '',
             });
           }
         }

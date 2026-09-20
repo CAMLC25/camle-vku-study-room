@@ -16,18 +16,49 @@ import { useTranslation } from '../store/useLanguageStore';
 interface SlotCellProps {
   slotIndex: SlotIndex;
   state: SlotState;
+  holdExpiresAt?: string;
   onPress: (slotIndex: SlotIndex) => void;
+  onHoldExpired?: (slotIndex: SlotIndex) => void;
   disabled?: boolean;
 }
 
 export const SlotCell: React.FC<SlotCellProps> = ({
   slotIndex,
   state,
+  holdExpiresAt,
   onPress,
+  onHoldExpired,
   disabled = false,
 }) => {
   const { t } = useTranslation();
   const definition = TIME_SLOT_DEFINITIONS[slotIndex];
+
+  const [secondsLeft, setSecondsLeft] = React.useState<number>(() => {
+    if (state !== 'HELD_BY_OTHER' || !holdExpiresAt) return 0;
+    return Math.max(0, Math.ceil((new Date(holdExpiresAt).getTime() - Date.now()) / 1000));
+  });
+
+  React.useEffect(() => {
+    if (state !== 'HELD_BY_OTHER' || !holdExpiresAt) {
+      setSecondsLeft(0);
+      return;
+    }
+
+    const calcSeconds = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((new Date(holdExpiresAt).getTime() - Date.now()) / 1000)
+      );
+      setSecondsLeft(remaining);
+      if (remaining <= 0 && onHoldExpired) {
+        onHoldExpired(slotIndex);
+      }
+    };
+
+    calcSeconds();
+    const interval = setInterval(calcSeconds, 1000);
+    return () => clearInterval(interval);
+  }, [state, holdExpiresAt, slotIndex, onHoldExpired]);
 
   const isInteractive = state === 'AVAILABLE' || state === 'MINE';
 
@@ -51,7 +82,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
         };
       case 'HELD_BY_OTHER':
         return {
-          badgeText: t('slotHeldByOther'),
+          badgeText: secondsLeft > 0 ? `${t('slotHeldByOther')} (${secondsLeft}s)` : t('slotHeldByOther'),
           badgeBg: '#fef3c7',
           badgeColor: '#d97706',
           cardBorder: '#fde68a',

@@ -232,6 +232,7 @@ const getEquipmentIcon = (eq: string): string => {
           <SlotGrid
             slots={slots}
             onSelectSlot={handleSelectSlot}
+            onRefresh={refresh}
           />
         </View>
       </View>
