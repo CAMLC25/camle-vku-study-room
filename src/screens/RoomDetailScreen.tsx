@@ -245,7 +245,10 @@ const getEquipmentIcon = (eq: string): string => {
           slotIndex={modalSlotIndex}
           studentId={currentStudentId}
           studentName={currentStudentName}
-          onClose={() => setModalSlotIndex(null)}
+          onClose={() => {
+            setModalSlotIndex(null);
+            refresh();
+          }}
           onSuccess={handleBookingSuccess}
         />
       )}

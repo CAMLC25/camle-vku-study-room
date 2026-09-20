@@ -57,7 +57,7 @@ export function resolveSlotState({
     const isHoldValid = new Date(serverHold.expiresAt).getTime() > Date.now();
     if (isHoldValid) {
       if (serverHold.studentId === currentStudentId) {
-        return 'MINE';
+        return 'AVAILABLE';
       }
       return 'HELD_BY_OTHER';
     }

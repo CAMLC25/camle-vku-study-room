@@ -97,7 +97,7 @@ export class MockBookingService implements IBookingService {
         if (hold.studentId === studentId) {
           slots[idx] = {
             slotIndex: idx,
-            state: 'MINE',
+            state: 'AVAILABLE',
             holdExpiresAt: hold.expiresAt,
           };
         } else {

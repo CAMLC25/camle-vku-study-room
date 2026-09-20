@@ -72,7 +72,7 @@ export class SupabaseBookingService implements IBookingService {
       if (h) {
         slots[idx] = {
           slotIndex: idx,
-          state: h.student_id === validStudentId ? 'MINE' : 'HELD_BY_OTHER',
+          state: h.student_id === validStudentId ? 'AVAILABLE' : 'HELD_BY_OTHER',
           holdExpiresAt: h.expires_at,
         };
       }
