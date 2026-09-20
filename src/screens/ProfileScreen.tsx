@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useBookingStore } from '../store/useBookingStore';
 import { useNetworkStore } from '../store/useNetworkStore';
@@ -14,7 +15,31 @@ import { useTranslation } from '../store/useLanguageStore';
 import { bookingService } from '../services/bookingService';
 import { syncService } from '../services/syncService';
 import { VKU_QUOTA_LIMITS } from '../types/quota';
-import { ENV } from '../config/environment';
+
+// 3 Registered Test Students in Supabase Database
+const REGISTERED_STUDENTS = [
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    code: '21IT001',
+    name: 'Nguyễn Văn A',
+    class: '21IT1',
+    avatarChar: 'A',
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    code: '21IT002',
+    name: 'Trần Thị B',
+    class: '21IT2',
+    avatarChar: 'B',
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000003',
+    code: '21IT003',
+    name: 'Lê Văn C',
+    class: '21IT3',
+    avatarChar: 'C',
+  },
+];
 
 export const ProfileScreen: React.FC = () => {
   const { t, language, setLanguage } = useTranslation();
@@ -23,6 +48,7 @@ export const ProfileScreen: React.FC = () => {
   const studentCode = useBookingStore((state) => state.currentStudentCode);
   const quotaUsage = useBookingStore((state) => state.quotaUsage);
   const setQuotaUsage = useBookingStore((state) => state.setQuotaUsage);
+  const switchStudent = useBookingStore((state) => state.switchStudent);
   const clearAllStorageAndReset = useBookingStore((state) => state.clearAllStorageAndReset);
   const myBookings = useBookingStore((state) => state.myBookings);
   const outbox = useBookingStore((state) => state.outbox);
@@ -31,6 +57,7 @@ export const ProfileScreen: React.FC = () => {
   const isSyncing = useNetworkStore((state) => state.sync.isSyncing);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   const refreshQuota = async () => {
     setIsRefreshing(true);
@@ -48,10 +75,28 @@ export const ProfileScreen: React.FC = () => {
     refreshQuota();
   }, [studentId]);
 
+  const handleSelectStudent = async (student: typeof REGISTERED_STUDENTS[0]) => {
+    if (student.id === studentId) return;
+    setIsSwitching(true);
+    try {
+      await switchStudent(student);
+      Alert.alert(
+        language === 'vi' ? 'Đã đổi sinh viên' : 'Student Switched',
+        language === 'vi'
+          ? `Đã đăng nhập tài khoản: ${student.name} (${student.code})`
+          : `Switched account to: ${student.name} (${student.code})`
+      );
+    } catch (e) {
+      console.error('Failed to switch student', e);
+    } finally {
+      setIsSwitching(false);
+    }
+  };
+
   const handleResetData = () => {
     Alert.alert(
-      t('resetDemoConfirmTitle'),
-      t('resetDemoConfirmMsg'),
+      t('clearCacheConfirmTitle'),
+      t('clearCacheConfirmMsg'),
       [
         { text: t('cancel'), style: 'cancel' },
         {
@@ -92,14 +137,36 @@ export const ProfileScreen: React.FC = () => {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* University Banner */}
-      <View style={styles.vkuBanner}>
-        <Text style={styles.vkuTitle}>
-          {language === 'vi' ? 'TRƯỜNG ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN' : 'VIETNAM - KOREA UNIVERSITY'}
-        </Text>
-        <Text style={styles.vkuSubtitle}>
-          {language === 'vi' ? 'Vietnam - Korea University of Information and Communication Technology' : 'Information and Communication Technology'}
-        </Text>
+      {/* University Top Header with Language Pill */}
+      <View style={styles.topHeader}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.vkuTitle}>
+            {language === 'vi' ? 'ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN' : 'VIETNAM - KOREA UNIVERSITY'}
+          </Text>
+          <Text style={styles.vkuSubtitle}>VKU Smart Study Spaces</Text>
+        </View>
+
+        {/* Compact, elegant language toggle at top-right */}
+        <View style={styles.langPillWrapper}>
+          <TouchableOpacity
+            style={[styles.langPillBtn, language === 'vi' && styles.langPillActive]}
+            onPress={() => setLanguage('vi')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.langPillText, language === 'vi' && styles.langPillTextActive]}>
+              🇻🇳 VN
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.langPillBtn, language === 'en' && styles.langPillActive]}
+            onPress={() => setLanguage('en')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.langPillText, language === 'en' && styles.langPillTextActive]}>
+              🇬🇧 EN
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Student Profile Card */}
@@ -121,13 +188,17 @@ export const ProfileScreen: React.FC = () => {
 
         <View style={styles.metaRow}>
           <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>{language === 'vi' ? 'Khoa CNTT & TT' : 'Faculty of ICT'}</Text>
+            <Text style={styles.metaBadgeText}>
+              {language === 'vi' ? 'Khoa CNTT & TT' : 'Faculty of ICT'}
+            </Text>
           </View>
           <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>{language === 'vi' ? 'Khóa 2021 – 2026' : 'Cohort 2021 – 2026'}</Text>
+            <Text style={styles.metaBadgeText}>
+              {language === 'vi' ? 'Khóa 2021 – 2026' : 'Cohort 2021 – 2026'}
+            </Text>
           </View>
           <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>Lớp 21IT1</Text>
+            <Text style={styles.metaBadgeText}>21IT1</Text>
           </View>
         </View>
 
@@ -149,9 +220,7 @@ export const ProfileScreen: React.FC = () => {
 
           <View style={styles.systemStatusItem}>
             <Text style={styles.systemStatusLabel}>{t('systemStatusDataMode')}</Text>
-            <Text style={styles.systemStatusValue}>
-              {ENV.appDataMode === 'supabase' ? 'SUPABASE' : 'MOCK'}
-            </Text>
+            <Text style={styles.systemStatusValue}>ONLINE</Text>
           </View>
 
           <View style={styles.systemStatusDivider} />
@@ -177,61 +246,76 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Language Selector Card */}
-      <View style={styles.languageCard}>
-        <View style={styles.languageHeader}>
-          <Text style={styles.languageTitle}>🌐 {t('languageLabel')}</Text>
-          <Text style={styles.languageActiveText}>
-            {language === 'vi' ? 'Tiếng Việt 🇻🇳' : 'English 🇬🇧'}
-          </Text>
+      {/* Switch Student Account Section (For Testing & Quota switching) */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>👥 {t('switchStudentTitle')}</Text>
+            <Text style={styles.sectionSubtitle}>{t('switchStudentDesc')}</Text>
+          </View>
+          {isSwitching && <ActivityIndicator size="small" color="#0284c7" />}
         </View>
-        <View style={styles.languageButtonRow}>
-          <TouchableOpacity
-            style={[
-              styles.langBtn,
-              language === 'vi' && styles.langBtnActive,
-            ]}
-            onPress={() => setLanguage('vi')}
-            accessibilityRole="button"
-            accessibilityLabel="Chọn Tiếng Việt"
-          >
-            <Text style={styles.langFlag}>🇻🇳</Text>
-            <Text
-              style={[
-                styles.langBtnText,
-                language === 'vi' && styles.langBtnTextActive,
-              ]}
-            >
-              {t('vietnamese')}
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.langBtn,
-              language === 'en' && styles.langBtnActive,
-            ]}
-            onPress={() => setLanguage('en')}
-            accessibilityRole="button"
-            accessibilityLabel="Select English"
-          >
-            <Text style={styles.langFlag}>🇬🇧</Text>
-            <Text
-              style={[
-                styles.langBtnText,
-                language === 'en' && styles.langBtnTextActive,
-              ]}
-            >
-              {t('english')}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.studentsList}>
+          {REGISTERED_STUDENTS.map((std) => {
+            const isCurrent = std.id === studentId;
+            return (
+              <TouchableOpacity
+                key={std.id}
+                style={[
+                  styles.studentItemCard,
+                  isCurrent && styles.studentItemCardActive,
+                ]}
+                onPress={() => handleSelectStudent(std)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.studentItemLeft}>
+                  <View
+                    style={[
+                      styles.studentMiniAvatar,
+                      isCurrent && styles.studentMiniAvatarActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.studentMiniAvatarText,
+                        isCurrent && styles.studentMiniAvatarTextActive,
+                      ]}
+                    >
+                      {std.avatarChar}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={styles.studentItemName}>{std.name}</Text>
+                    <Text style={styles.studentItemCode}>
+                      MSSV: {std.code} • {std.class}
+                    </Text>
+                  </View>
+                </View>
+
+                {isCurrent ? (
+                  <View style={styles.activeStudentBadge}>
+                    <Text style={styles.activeStudentBadgeText}>
+                      ✓ {t('activeStudentBadge')}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.switchButtonPill}>
+                    <Text style={styles.switchButtonPillText}>
+                      {language === 'vi' ? 'Chọn' : 'Select'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
       {/* Quota & Usage Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('quotasTitle')}</Text>
+          <Text style={styles.sectionTitle}>📊 {t('quotasTitle')}</Text>
           <TouchableOpacity
             onPress={refreshQuota}
             style={styles.refreshButton}
@@ -241,7 +325,7 @@ export const ProfileScreen: React.FC = () => {
             {isRefreshing ? (
               <ActivityIndicator size="small" color="#0284c7" />
             ) : (
-              <Text style={styles.refreshButtonText}>{t('refresh')}</Text>
+              <Text style={styles.refreshButtonText}>🔄 {t('refresh')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -253,7 +337,12 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.quotaTitle}>{t('dailyQuotaTitle')}</Text>
               <Text style={styles.quotaDesc}>{t('dailyQuotaDesc')}</Text>
             </View>
-            <Text style={styles.quotaCount}>
+            <Text
+              style={[
+                styles.quotaCount,
+                quotaUsage.dailyUsage >= VKU_QUOTA_LIMITS.maxDailySlots && styles.quotaCountFull,
+              ]}
+            >
               {quotaUsage.dailyUsage} / {VKU_QUOTA_LIMITS.maxDailySlots}
             </Text>
           </View>
@@ -292,7 +381,12 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.quotaTitle}>{t('weeklyQuotaTitle')}</Text>
               <Text style={styles.quotaDesc}>{t('weeklyQuotaDesc')}</Text>
             </View>
-            <Text style={styles.quotaCount}>
+            <Text
+              style={[
+                styles.quotaCount,
+                quotaUsage.weeklyUsage >= VKU_QUOTA_LIMITS.maxWeeklySlots && styles.quotaCountFull,
+              ]}
+            >
               {quotaUsage.weeklyUsage} / {VKU_QUOTA_LIMITS.maxWeeklySlots}
             </Text>
           </View>
@@ -331,7 +425,13 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.quotaTitle}>{t('futureQuotaTitle')}</Text>
               <Text style={styles.quotaDesc}>{t('futureQuotaDesc')}</Text>
             </View>
-            <Text style={styles.quotaCount}>
+            <Text
+              style={[
+                styles.quotaCount,
+                quotaUsage.activeFutureCount >= VKU_QUOTA_LIMITS.maxActiveFutureBookings &&
+                  styles.quotaCountFull,
+              ]}
+            >
               {quotaUsage.activeFutureCount} / {VKU_QUOTA_LIMITS.maxActiveFutureBookings}
             </Text>
           </View>
@@ -341,7 +441,10 @@ export const ProfileScreen: React.FC = () => {
               style={[
                 styles.progressBarFill,
                 {
-                  width: `${Math.min(100, (quotaUsage.activeFutureCount / VKU_QUOTA_LIMITS.maxActiveFutureBookings) * 100)}%`,
+                  width: `${Math.min(
+                    100,
+                    (quotaUsage.activeFutureCount / VKU_QUOTA_LIMITS.maxActiveFutureBookings) * 100
+                  )}%`,
                   backgroundColor: getProgressColor(
                     quotaUsage.activeFutureCount,
                     VKU_QUOTA_LIMITS.maxActiveFutureBookings
@@ -359,27 +462,21 @@ export const ProfileScreen: React.FC = () => {
             </Text>
             <Text style={styles.quotaPercent}>
               {Math.round(
-                (quotaUsage.activeFutureCount /
-                  VKU_QUOTA_LIMITS.maxActiveFutureBookings) *
-                  100
-              )}
-              %
+                (quotaUsage.activeFutureCount / VKU_QUOTA_LIMITS.maxActiveFutureBookings) * 100
+              )}%
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Demo Controls & Testing Suite */}
+      {/* Account Settings & Outbox Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('demoControlsTitle')}</Text>
-
         {pendingSyncCount > 0 && (
           <TouchableOpacity
             style={styles.syncButton}
             onPress={handleManualSync}
             disabled={isSyncing}
-            accessibilityRole="button"
-            accessibilityLabel="Sync outbox queue now"
+            activeOpacity={0.8}
           >
             {isSyncing ? (
               <ActivityIndicator size="small" color="#ffffff" />
@@ -394,21 +491,10 @@ export const ProfileScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.resetButton}
           onPress={handleResetData}
-          accessibilityRole="button"
-          accessibilityLabel="Reset demo state and bookings"
+          activeOpacity={0.7}
         >
-          <Text style={styles.resetButtonText}>{t('resetDemoBtn')}</Text>
+          <Text style={styles.resetButtonText}>🗑️ {t('clearCacheBtn')}</Text>
         </TouchableOpacity>
-
-        {/* Technical Architecture Footnote */}
-        <View style={styles.specsCard}>
-          <Text style={styles.specsTitle}>{t('systemDiagnosticsTitle')}</Text>
-          <Text style={styles.specsItem}>• {t('engineSpec')}</Text>
-          <Text style={styles.specsItem}>• {t('databaseSpec')}</Text>
-          <Text style={styles.specsItem}>• {t('concurrencySpec')}</Text>
-          <Text style={styles.specsItem}>• {t('offlineSpec')}</Text>
-          <Text style={styles.specsItem}>• {t('stateSpec')}</Text>
-        </View>
       </View>
     </ScrollView>
   );
@@ -417,113 +503,139 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
   },
   scrollContent: {
     paddingBottom: 40,
   },
-  vkuBanner: {
+  topHeader: {
     backgroundColor: '#0c4a6e',
     paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerLeft: {
+    flex: 1,
+  },
   vkuTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: '#e0f2fe',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   vkuSubtitle: {
     fontSize: 11,
     color: '#94a3b8',
-    marginTop: 2,
+    marginTop: 1,
+    fontWeight: '500',
+  },
+  langPillWrapper: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    padding: 2,
+    gap: 2,
+  },
+  langPillBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  langPillActive: {
+    backgroundColor: '#ffffff',
+  },
+  langPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#cbd5e1',
+  },
+  langPillTextActive: {
+    color: '#0c4a6e',
   },
   profileCard: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginTop: 14,
+    borderRadius: 18,
+    padding: 18,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: '#0284c7',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#e0f2fe',
   },
   avatarText: {
-    fontSize: 32,
-    fontWeight: '800',
     color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '800',
   },
   statusDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#ffffff',
     position: 'absolute',
     bottom: 2,
     right: 2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ffffff',
   },
   studentName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0f172a',
   },
   studentCode: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
     color: '#64748b',
     marginTop: 2,
+    fontWeight: '600',
   },
   metaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: 6,
+    marginTop: 10,
   },
   metaBadge: {
     backgroundColor: '#f1f5f9',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   metaBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
     color: '#475569',
+    fontWeight: '600',
   },
   systemStatusBar: {
     flexDirection: 'row',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
     width: '100%',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginTop: 18,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
@@ -531,220 +643,207 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   systemStatusLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
+    fontSize: 11,
+    color: '#64748b',
   },
   systemStatusValue: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#0f172a',
     marginTop: 2,
   },
   systemStatusDivider: {
     width: 1,
-    height: 24,
-    backgroundColor: '#cbd5e1',
+    height: 22,
+    backgroundColor: '#e2e8f0',
   },
   section: {
-    marginTop: 20,
-    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    color: '#475569',
-    letterSpacing: 0.6,
+    color: '#0f172a',
+    letterSpacing: 0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
   },
   refreshButton: {
-    paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
     backgroundColor: '#e0f2fe',
-    minHeight: 28,
-    justifyContent: 'center',
   },
   refreshButtonText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#0284c7',
   },
+  studentsList: {
+    gap: 8,
+  },
+  studentItemCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  studentItemCardActive: {
+    borderColor: '#0284c7',
+    backgroundColor: '#f0f9ff',
+  },
+  studentItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  studentMiniAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  studentMiniAvatarActive: {
+    backgroundColor: '#0284c7',
+  },
+  studentMiniAvatarText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  studentMiniAvatarTextActive: {
+    color: '#ffffff',
+  },
+  studentItemName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  studentItemCode: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 1,
+  },
+  activeStudentBadge: {
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#86efac',
+  },
+  activeStudentBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803d',
+  },
+  switchButtonPill: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  switchButtonPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#334155',
+  },
   quotaCard: {
     backgroundColor: '#ffffff',
     borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
+    padding: 14,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   quotaHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   quotaTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0f172a',
   },
   quotaDesc: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 1,
   },
   quotaCount: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0284c7',
+    color: '#0f172a',
+  },
+  quotaCountFull: {
+    color: '#ef4444',
   },
   progressBarTrack: {
-    height: 10,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 5,
+    height: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 3,
   },
   quotaFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 6,
   },
   quotaStatusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
     color: '#64748b',
   },
   quotaPercent: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#334155',
-  },
-  syncButton: {
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  syncButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  resetButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#fca5a5',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  resetButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  specsCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  specsTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 6,
-  },
-  specsItem: {
     fontSize: 11,
-    color: '#64748b',
-    lineHeight: 18,
-  },
-  languageCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginTop: 14,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  languageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  languageTitle: {
-    fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
   },
-  languageActiveText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0284c7',
-  },
-  languageButtonRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  langBtn: {
-    flex: 1,
-    flexDirection: 'row',
+  syncButton: {
+    backgroundColor: '#0284c7',
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    gap: 8,
+    marginBottom: 8,
   },
-  langBtnActive: {
-    backgroundColor: '#e0f2fe',
-    borderColor: '#0284c7',
+  syncButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
-  langFlag: {
-    fontSize: 18,
+  resetButton: {
+    backgroundColor: '#ffffff',
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
   },
-  langBtnText: {
+  resetButtonText: {
+    color: '#dc2626',
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
-  },
-  langBtnTextActive: {
-    color: '#0369a1',
-    fontWeight: '800',
   },
 });

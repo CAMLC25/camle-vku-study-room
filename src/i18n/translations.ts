@@ -149,19 +149,18 @@ export const translations = {
     futureRemainingText: 'ca có thể đặt thêm',
     futureLimitReached: 'Đã đạt tối đa 3 ca đặt trước đồng thời',
 
-    // System Diagnostics & Demo Controls
-    demoControlsTitle: 'BỘ ĐIỀU KHIỂN CHẤM ĐIỂM & ĐÁNH GIÁ',
+    // Student Switcher & Account
+    switchStudentTitle: 'Chuyển đổi tài khoản sinh viên (Test)',
+    switchStudentDesc: 'Đổi sinh viên để thử nghiệm đặt phòng khi tài khoản hiện tại đã dùng hết hạn mức',
+    activeStudentBadge: 'Đang dùng',
+    clearCacheBtn: 'Xóa bộ nhớ đệm & Làm mới dữ liệu',
+    clearCacheConfirmTitle: 'Làm mới bộ nhớ ứng dụng',
+    clearCacheConfirmMsg: 'Hành động này sẽ xóa dữ liệu lưu tạm trong bộ nhớ máy và đồng bộ lại từ máy chủ Supabase.',
+    resetDemoBtn: 'Làm mới bộ nhớ ứng dụng',
+    resetDemoConfirmTitle: 'Xác nhận làm mới',
+    resetDemoConfirmMsg: 'Hành động này sẽ xóa dữ liệu lưu tạm và đồng bộ lại từ máy chủ Supabase.',
+    resetDemoSuccess: 'Đã làm mới dữ liệu thành công.',
     syncOutboxBtn: 'Đồng bộ hàng đợi Outbox',
-    resetDemoBtn: 'Khôi phục dữ liệu Demo ban đầu',
-    resetDemoConfirmTitle: 'Khôi phục môi trường Demo',
-    resetDemoConfirmMsg: 'Hành động này sẽ xóa toàn bộ lịch đặt cục bộ, làm sạch hàng đợi Outbox và đưa hệ thống về trạng thái ban đầu sạch sẽ để chấm điểm.',
-    resetDemoSuccess: 'Đã khôi phục trạng thái Demo ban đầu thành công.',
-    systemDiagnosticsTitle: 'Thông số kỹ thuật đồ án',
-    engineSpec: 'Nền tảng: React Native 0.86 / Expo SDK 57',
-    databaseSpec: 'Cơ sở dữ liệu: PostgreSQL 15+ Advisory Lock book_slot()',
-    concurrencySpec: 'Chống tranh chấp: Partial Unique Index idx_bookings_active_slot',
-    offlineSpec: 'Ngoại tuyến: Deterministic Sequential Outbox Queue',
-    stateSpec: 'Quản lý trạng thái: Zustand với Safe AsyncStorage Persistence',
 
     // Language Toggle
     languageLabel: 'Ngôn ngữ hiển thị',
@@ -371,19 +370,18 @@ export const translations = {
     futureRemainingText: 'slot(s) can still be reserved',
     futureLimitReached: 'Maximum simultaneous bookings reached (3/3)',
 
-    // System Diagnostics & Demo Controls
-    demoControlsTitle: 'DEMO & EVALUATION CONTROLS',
+    // Student Switcher & Account
+    switchStudentTitle: 'Switch Student Account (Test)',
+    switchStudentDesc: 'Switch to another student to test bookings when current student hits quota limits',
+    activeStudentBadge: 'Active',
+    clearCacheBtn: 'Clear Cache & Refresh Data',
+    clearCacheConfirmTitle: 'Reset App Cache',
+    clearCacheConfirmMsg: 'This will clear locally cached records and re-sync freshly from Supabase.',
+    resetDemoBtn: 'Reset App Cache',
+    resetDemoConfirmTitle: 'Confirm Reset',
+    resetDemoConfirmMsg: 'This will clear local cache and re-sync freshly from Supabase.',
+    resetDemoSuccess: 'App cache cleared successfully.',
     syncOutboxBtn: 'Sync Pending Outbox',
-    resetDemoBtn: 'Reset Demo State & Clear Cache',
-    resetDemoConfirmTitle: 'Reset Demo Environment',
-    resetDemoConfirmMsg: 'This will clear all local bookings, pending outbox queues, and restore clean initial test data for grading.',
-    resetDemoSuccess: 'Demo state has been restored to default.',
-    systemDiagnosticsTitle: 'Academic Implementation Specs',
-    engineSpec: 'Engine: React Native 0.86 / Expo SDK 57',
-    databaseSpec: 'Database: PostgreSQL 15+ Advisory Lock book_slot()',
-    concurrencySpec: 'Concurrency: Partial Unique Index idx_bookings_active_slot',
-    offlineSpec: 'Offline: Deterministic Sequential Outbox Queue',
-    stateSpec: 'State: Zustand with Safe AsyncStorage Persistence',
 
     // Language Toggle
     languageLabel: 'Display Language',

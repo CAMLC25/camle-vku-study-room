@@ -18,82 +18,124 @@ export interface DomainError {
 }
 
 export function mapErrorToDomain(rawError: any): DomainError {
-  const errorMsg = String(rawError?.message || rawError?.errorCode || rawError || '');
+  const errorMsg = String(
+    rawError?.message ||
+    rawError?.errorMessage ||
+    rawError?.errorCode ||
+    rawError ||
+    ''
+  );
   const errorCode = String(rawError?.code || rawError?.errorCode || '');
 
   // 1. PostgreSQL 23505 Unique Violation or direct domain error
-  if (errorCode === '23505' || errorMsg.includes('23505') || errorMsg.includes('SLOT_ALREADY_BOOKED')) {
+  if (
+    errorCode === '23505' ||
+    errorCode === 'SLOT_ALREADY_BOOKED' ||
+    errorMsg.includes('23505') ||
+    errorMsg.includes('SLOT_ALREADY_BOOKED') ||
+    errorMsg.includes('already booked') ||
+    errorMsg.includes('taken by another')
+  ) {
     return {
       code: 'SLOT_ALREADY_BOOKED',
-      title: 'Slot Unavailable',
-      message: 'This slot was just taken by another student.',
+      title: 'Ca học không khả dụng',
+      message: 'Ca học này vừa có sinh viên khác đặt trước.',
     };
   }
 
   // 2. Soft Hold Conflict
-  if (errorMsg.includes('SLOT_HELD_BY_OTHER')) {
+  if (
+    errorCode === 'SLOT_HELD_BY_OTHER' ||
+    errorMsg.includes('SLOT_HELD_BY_OTHER') ||
+    errorMsg.includes('held by other')
+  ) {
     return {
       code: 'SLOT_HELD_BY_OTHER',
-      title: 'Slot Held',
-      message: 'Another student is currently checking out this slot. Please try again shortly.',
+      title: 'Ca đang được giữ chỗ',
+      message: 'Một sinh viên khác đang mở màn hình xác nhận trong 90 giây. Vui lòng thử lại sau giây lát.',
     };
   }
 
   // 3. Quotas
-  if (errorMsg.includes('DAILY_QUOTA_EXCEEDED')) {
+  if (
+    errorCode === 'DAILY_QUOTA_EXCEEDED' ||
+    errorMsg.includes('DAILY_QUOTA_EXCEEDED') ||
+    errorMsg.includes('daily booking limit') ||
+    errorMsg.includes('daily quota')
+  ) {
     return {
       code: 'DAILY_QUOTA_EXCEEDED',
-      title: 'Daily Limit Reached',
-      message: 'You have reached your daily booking limit (maximum 2 slots per day).',
+      title: 'Hết hạn mức trong ngày',
+      message: 'Bạn đã đạt giới hạn mượn phòng trong ngày (tối đa 2 ca/ngày).',
     };
   }
 
-  if (errorMsg.includes('WEEKLY_QUOTA_EXCEEDED')) {
+  if (
+    errorCode === 'WEEKLY_QUOTA_EXCEEDED' ||
+    errorMsg.includes('WEEKLY_QUOTA_EXCEEDED') ||
+    errorMsg.includes('weekly booking limit')
+  ) {
     return {
       code: 'WEEKLY_QUOTA_EXCEEDED',
-      title: 'Weekly Limit Reached',
-      message: 'You have reached your weekly booking limit (maximum 6 slots per week).',
+      title: 'Hết hạn mức trong tuần',
+      message: 'Bạn đã đạt giới hạn mượn phòng trong tuần (tối đa 6 ca/tuần).',
     };
   }
 
-  if (errorMsg.includes('ACTIVE_BOOKING_LIMIT_EXCEEDED')) {
+  if (
+    errorCode === 'ACTIVE_BOOKING_LIMIT_EXCEEDED' ||
+    errorMsg.includes('ACTIVE_BOOKING_LIMIT_EXCEEDED') ||
+    errorMsg.includes('maximum allowed active')
+  ) {
     return {
       code: 'ACTIVE_BOOKING_LIMIT_EXCEEDED',
-      title: 'Active Bookings Limit Reached',
-      message: 'You have reached the maximum allowed active future bookings (maximum 3 bookings).',
+      title: 'Đạt giới hạn ca đặt trước',
+      message: 'Bạn đã đạt tối đa số ca đặt trước đồng thời (tối đa 3 ca đang chờ).',
     };
   }
 
   // 4. Horizon
-  if (errorMsg.includes('OUTSIDE_BOOKING_HORIZON')) {
+  if (
+    errorCode === 'OUTSIDE_BOOKING_HORIZON' ||
+    errorMsg.includes('OUTSIDE_BOOKING_HORIZON') ||
+    errorMsg.includes('7-day')
+  ) {
     return {
       code: 'OUTSIDE_BOOKING_HORIZON',
-      title: 'Date Out of Range',
-      message: 'Reservations are only permitted within the allowed 7-day window.',
+      title: 'Ngoài phạm vi đặt phòng',
+      message: 'Chỉ được phép đặt phòng trong phạm vi 7 ngày tới.',
     };
   }
 
   // 5. Hold Expired
-  if (errorMsg.includes('HOLD_EXPIRED')) {
+  if (
+    errorCode === 'HOLD_EXPIRED' ||
+    errorMsg.includes('HOLD_EXPIRED') ||
+    errorMsg.includes('hold expired')
+  ) {
     return {
       code: 'HOLD_EXPIRED',
-      title: 'Reservation Hold Expired',
-      message: 'Your 90-second hold has timed out. Please select the slot again.',
+      title: 'Hết thời gian giữ chỗ',
+      message: 'Thời gian giữ chỗ tạm thời 90 giây đã kết thúc. Vui lòng chọn lại.',
     };
   }
 
   // 6. Network
-  if (errorMsg.includes('Network') || errorMsg.includes('Failed to fetch') || errorCode === 'NETWORK_ERROR') {
+  if (
+    errorCode === 'NETWORK_ERROR' ||
+    errorMsg.includes('Network') ||
+    errorMsg.includes('Failed to fetch')
+  ) {
     return {
       code: 'NETWORK_ERROR',
-      title: 'Connection Issue',
-      message: 'Unable to reach the campus server. Please check your internet connection.',
+      title: 'Lỗi kết nối mạng',
+      message: 'Không thể kết nối đến máy chủ nhà trường. Vui lòng kiểm tra kết nối internet.',
     };
   }
 
   return {
     code: 'UNKNOWN_ERROR',
-    title: 'Booking Error',
-    message: rawError?.errorMessage || rawError?.message || 'An unexpected error occurred while reserving this slot.',
+    title: 'Lỗi đặt phòng',
+    message: rawError?.errorMessage || rawError?.message || 'Có lỗi xảy ra khi xử lý đặt phòng. Vui lòng thử lại.',
   };
 }

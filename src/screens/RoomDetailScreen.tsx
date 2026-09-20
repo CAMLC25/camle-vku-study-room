@@ -232,8 +232,6 @@ const getEquipmentIcon = (eq: string): string => {
           <SlotGrid
             slots={slots}
             onSelectSlot={handleSelectSlot}
-            onSimulateRemoteBooking={simulateRemoteBooking}
-            isSimulateAllowed={true}
           />
         </View>
       </View>

@@ -55,6 +55,7 @@ interface BookingStoreState {
   updateOutboxItem: (id: string, updates: Partial<BookingOutboxItem>) => void;
   removeFromOutbox: (id: string) => void;
   setQuotaUsage: (usage: StudentQuotaUsage) => void;
+  switchStudent: (student: { id: string; name: string; code: string }) => Promise<void>;
   clearAllStorageAndReset: () => Promise<void>;
 }
 
@@ -232,6 +233,23 @@ export const useBookingStore = create<BookingStoreState>()(
 
       setQuotaUsage: (usage) => {
         set({ quotaUsage: usage });
+      },
+
+      switchStudent: async (student) => {
+        const validId = ensureStudentUuid(student.id);
+        set({
+          currentStudentId: validId,
+          currentStudentName: student.name,
+          currentStudentCode: student.code,
+        });
+        try {
+          const usage = await bookingService.getStudentQuotaUsage(validId);
+          set({ quotaUsage: usage });
+          const bookings = await bookingService.getMyBookings(validId);
+          set({ myBookings: bookings });
+        } catch (e) {
+          console.warn('Failed to refresh data for switched student', e);
+        }
       },
 
       clearAllStorageAndReset: async () => {
