@@ -76,12 +76,16 @@ export function isWithinBookingHorizon(dateStr: string, baseDate: Date = new Dat
 
 /**
  * Formats an ISO date string to a human-friendly format
- * e.g., '2026-09-21' -> 'Monday, 21 Sep 2026'
+ * e.g., '2026-09-21' -> 'Thứ Hai, 21/09/2026' (vi) or 'Monday, 21 Sep 2026' (en)
  */
-export function formatDisplayDate(dateStr: string): string {
+export function formatDisplayDate(dateStr: string, language: 'vi' | 'en' = 'vi'): string {
   try {
     const [year, month, day] = dateStr.split('-').map(Number);
     const d = new Date(year, month - 1, day);
+    if (language === 'vi') {
+      const daysVi = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      return `${daysVi[d.getDay()]}, ${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+    }
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'

@@ -11,6 +11,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { Booking } from '../types/booking';
 import { TIME_SLOT_DEFINITIONS } from '../types/slot';
 import { formatDisplayDate } from '../utils/date';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface BookingPassModalProps {
   booking: Booking | null;
@@ -23,6 +24,8 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
   visible,
   onClose,
 }) => {
+  const { t } = useTranslation();
+
   if (!booking || booking.status !== 'CONFIRMED') {
     return null;
   }
@@ -41,10 +44,10 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
           {/* Top Banner */}
           <View style={styles.banner}>
             <View style={styles.universityBadge}>
-              <Text style={styles.universityText}>VKU CAMPUS PASS</Text>
+              <Text style={styles.universityText}>{t('vkuPassBadge')}</Text>
             </View>
             <View style={styles.verifiedBadge}>
-              <Text style={styles.verifiedText}>✓ CONFIRMED</Text>
+              <Text style={styles.verifiedText}>{t('verifiedBadge')}</Text>
             </View>
           </View>
 
@@ -52,7 +55,7 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
           <View style={styles.headerContent}>
             <Text style={styles.roomName}>{booking.roomName}</Text>
             <Text style={styles.location}>
-              Building {booking.building} • Floor {booking.floor}
+              {t('buildingLabel')} {booking.building} • {t('floor')} {booking.floor}
             </Text>
           </View>
 
@@ -67,13 +70,13 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
           <View style={styles.detailsBody}>
             <View style={styles.infoRow}>
               <View>
-                <Text style={styles.infoLabel}>Date</Text>
+                <Text style={styles.infoLabel}>{t('bookingDate')}</Text>
                 <Text style={styles.infoValue}>
                   {formatDisplayDate(booking.bookingDate)}
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.infoLabel}>Time Window</Text>
+                <Text style={styles.infoLabel}>{t('bookingTime')}</Text>
                 <Text style={styles.infoValueHighlight}>
                   {slotDef?.label}
                 </Text>
@@ -82,15 +85,15 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
 
             <View style={styles.infoRow}>
               <View>
-                <Text style={styles.infoLabel}>Student Name</Text>
+                <Text style={styles.infoLabel}>{t('borrower')}</Text>
                 <Text style={styles.infoValue}>
                   {booking.studentName || 'VKU Student'}
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.infoLabel}>Slot</Text>
+                <Text style={styles.infoLabel}>{t('slotPrefix')}</Text>
                 <Text style={styles.infoValue}>
-                  Session {booking.slotIndex + 1}
+                  {t('slotPrefix')} {booking.slotIndex + 1}
                 </Text>
               </View>
             </View>
@@ -106,10 +109,10 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
                 />
               </View>
               <Text style={styles.qrInstructions}>
-                Scan at room door reader or present to lab manager
+                {t('qrPassSubtitle')}
               </Text>
               <Text style={styles.bookingIdText}>
-                ID: {booking.id}
+                {t('qrBookingId')}: {booking.id}
               </Text>
             </View>
           </View>
@@ -119,8 +122,10 @@ export const BookingPassModal: React.FC<BookingPassModalProps> = ({
             style={styles.closeButton}
             onPress={onClose}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('close')}
           >
-            <Text style={styles.closeButtonText}>Done</Text>
+            <Text style={styles.closeButtonText}>{t('close')}</Text>
           </TouchableOpacity>
         </View>
       </View>

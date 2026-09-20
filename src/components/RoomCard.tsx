@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Room } from '../types/room';
+import { useTranslation } from '../store/useLanguageStore';
 
 export const ROOM_CARD_HEIGHT = 136;
 
@@ -19,13 +20,15 @@ interface RoomCardProps {
 
 export const RoomCard = React.memo<RoomCardProps>(
   ({ room, onPress, isAvailableNow = true }) => {
+    const { t } = useTranslation();
+
     return (
       <TouchableOpacity
         style={styles.card}
         activeOpacity={0.75}
         onPress={() => onPress(room.id)}
         accessibilityRole="button"
-        accessibilityLabel={`Room ${room.name}, Building ${room.building}, Floor ${room.floor}, Capacity ${room.capacity} students`}
+        accessibilityLabel={`${room.name}, ${t('buildingLabel')} ${room.building}, ${t('floor')} ${room.floor}, ${room.capacity} ${t('seats')}`}
       >
         <Image
           source={{ uri: room.photoUrl }}
@@ -58,7 +61,7 @@ export const RoomCard = React.memo<RoomCardProps>(
                   isAvailableNow ? styles.statusTextAvailable : styles.statusTextOccupied,
                 ]}
               >
-                {isAvailableNow ? 'Available' : 'Occupied'}
+                {isAvailableNow ? t('slotAvailable') : t('occupied')}
               </Text>
             </View>
           </View>
@@ -66,12 +69,12 @@ export const RoomCard = React.memo<RoomCardProps>(
           <View style={styles.metaRow}>
             <View style={styles.metaPill}>
               <Text style={styles.metaPillText}>
-                Bldg {room.building} • Fl {room.floor}
+                {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
               </Text>
             </View>
             <View style={styles.capacityPill}>
               <Text style={styles.capacityPillText}>
-                {room.capacity} seats
+                {room.capacity} {t('seats')}
               </Text>
             </View>
           </View>

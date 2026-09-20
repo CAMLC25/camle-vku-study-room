@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { useBookingStore } from '../store/useBookingStore';
 import { useNetworkStore } from '../store/useNetworkStore';
+import { useTranslation } from '../store/useLanguageStore';
 import { bookingService } from '../services/bookingService';
 import { syncService } from '../services/syncService';
 import { VKU_QUOTA_LIMITS } from '../types/quota';
 import { ENV } from '../config/environment';
 
 export const ProfileScreen: React.FC = () => {
+  const { t, language, setLanguage } = useTranslation();
   const studentId = useBookingStore((state) => state.currentStudentId);
   const studentName = useBookingStore((state) => state.currentStudentName);
   const studentCode = useBookingStore((state) => state.currentStudentCode);
@@ -48,17 +50,17 @@ export const ProfileScreen: React.FC = () => {
 
   const handleResetData = () => {
     Alert.alert(
-      'Reset Demo Environment',
-      'This will clear all local bookings, pending outbox queues, and restore clean initial test data for grading.',
+      t('resetDemoConfirmTitle'),
+      t('resetDemoConfirmMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Confirm Reset',
+          text: t('confirm'),
           style: 'destructive',
           onPress: async () => {
             await clearAllStorageAndReset();
             await refreshQuota();
-            Alert.alert('Reset Complete', 'Demo state has been restored to default.');
+            Alert.alert(t('resetCompleteTitle'), t('resetCompleteMsg'));
           },
         },
       ]
@@ -67,7 +69,7 @@ export const ProfileScreen: React.FC = () => {
 
   const handleManualSync = async () => {
     if (!isConnected) {
-      Alert.alert('Offline Mode', 'Cannot synchronize while offline. Please enable network connection.');
+      Alert.alert(t('offlineAlertTitle'), t('offlineAlertMsg'));
       return;
     }
     await syncService.flushOutboxSequentially();
@@ -92,8 +94,12 @@ export const ProfileScreen: React.FC = () => {
     >
       {/* University Banner */}
       <View style={styles.vkuBanner}>
-        <Text style={styles.vkuTitle}>VIETNAM - KOREA UNIVERSITY</Text>
-        <Text style={styles.vkuSubtitle}>Information and Communication Technology</Text>
+        <Text style={styles.vkuTitle}>
+          {language === 'vi' ? 'TRƯỜNG ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN' : 'VIETNAM - KOREA UNIVERSITY'}
+        </Text>
+        <Text style={styles.vkuSubtitle}>
+          {language === 'vi' ? 'Vietnam - Korea University of Information and Communication Technology' : 'Information and Communication Technology'}
+        </Text>
       </View>
 
       {/* Student Profile Card */}
@@ -115,10 +121,10 @@ export const ProfileScreen: React.FC = () => {
 
         <View style={styles.metaRow}>
           <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>CNTT & TT</Text>
+            <Text style={styles.metaBadgeText}>{language === 'vi' ? 'Khoa CNTT & TT' : 'Faculty of ICT'}</Text>
           </View>
           <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>Khóa 2021 - 2026</Text>
+            <Text style={styles.metaBadgeText}>{language === 'vi' ? 'Khóa 2021 – 2026' : 'Cohort 2021 – 2026'}</Text>
           </View>
           <View style={styles.metaBadge}>
             <Text style={styles.metaBadgeText}>Lớp 21IT1</Text>
@@ -128,21 +134,21 @@ export const ProfileScreen: React.FC = () => {
         {/* System Diagnostics Bar */}
         <View style={styles.systemStatusBar}>
           <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>Network</Text>
+            <Text style={styles.systemStatusLabel}>{t('systemStatusNetwork')}</Text>
             <Text
               style={[
                 styles.systemStatusValue,
                 { color: isConnected ? '#10b981' : '#f59e0b' },
               ]}
             >
-              {isConnected ? 'ONLINE' : 'OFFLINE'}
+              {isConnected ? t('statusOnline') : t('statusOffline')}
             </Text>
           </View>
 
           <View style={styles.systemStatusDivider} />
 
           <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>Data Mode</Text>
+            <Text style={styles.systemStatusLabel}>{t('systemStatusDataMode')}</Text>
             <Text style={styles.systemStatusValue}>
               {ENV.appDataMode === 'supabase' ? 'SUPABASE' : 'MOCK'}
             </Text>
@@ -151,30 +157,81 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.systemStatusDivider} />
 
           <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>Active Slots</Text>
+            <Text style={styles.systemStatusLabel}>{t('systemStatusActiveSlots')}</Text>
             <Text style={styles.systemStatusValue}>{confirmedCount}</Text>
           </View>
 
           <View style={styles.systemStatusDivider} />
 
           <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>Outbox</Text>
+            <Text style={styles.systemStatusLabel}>{t('systemStatusOutbox')}</Text>
             <Text
               style={[
                 styles.systemStatusValue,
                 { color: pendingSyncCount > 0 ? '#f59e0b' : '#0284c7' },
               ]}
             >
-              {pendingSyncCount} pending
+              {pendingSyncCount} {t('pendingCountSuffix')}
             </Text>
           </View>
+        </View>
+      </View>
+
+      {/* Language Selector Card */}
+      <View style={styles.languageCard}>
+        <View style={styles.languageHeader}>
+          <Text style={styles.languageTitle}>🌐 {t('languageLabel')}</Text>
+          <Text style={styles.languageActiveText}>
+            {language === 'vi' ? 'Tiếng Việt 🇻🇳' : 'English 🇬🇧'}
+          </Text>
+        </View>
+        <View style={styles.languageButtonRow}>
+          <TouchableOpacity
+            style={[
+              styles.langBtn,
+              language === 'vi' && styles.langBtnActive,
+            ]}
+            onPress={() => setLanguage('vi')}
+            accessibilityRole="button"
+            accessibilityLabel="Chọn Tiếng Việt"
+          >
+            <Text style={styles.langFlag}>🇻🇳</Text>
+            <Text
+              style={[
+                styles.langBtnText,
+                language === 'vi' && styles.langBtnTextActive,
+              ]}
+            >
+              {t('vietnamese')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.langBtn,
+              language === 'en' && styles.langBtnActive,
+            ]}
+            onPress={() => setLanguage('en')}
+            accessibilityRole="button"
+            accessibilityLabel="Select English"
+          >
+            <Text style={styles.langFlag}>🇬🇧</Text>
+            <Text
+              style={[
+                styles.langBtnText,
+                language === 'en' && styles.langBtnTextActive,
+              ]}
+            >
+              {t('english')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Quota & Usage Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>STUDENT BOOKING QUOTAS</Text>
+          <Text style={styles.sectionTitle}>{t('quotasTitle')}</Text>
           <TouchableOpacity
             onPress={refreshQuota}
             style={styles.refreshButton}
@@ -184,7 +241,7 @@ export const ProfileScreen: React.FC = () => {
             {isRefreshing ? (
               <ActivityIndicator size="small" color="#0284c7" />
             ) : (
-              <Text style={styles.refreshButtonText}>Refresh</Text>
+              <Text style={styles.refreshButtonText}>{t('refresh')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -193,8 +250,8 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.quotaCard}>
           <View style={styles.quotaHeader}>
             <View>
-              <Text style={styles.quotaTitle}>Daily Quota</Text>
-              <Text style={styles.quotaDesc}>Maximum 2 slots per calendar day</Text>
+              <Text style={styles.quotaTitle}>{t('dailyQuotaTitle')}</Text>
+              <Text style={styles.quotaDesc}>{t('dailyQuotaDesc')}</Text>
             </View>
             <Text style={styles.quotaCount}>
               {quotaUsage.dailyUsage} / {VKU_QUOTA_LIMITS.maxDailySlots}
@@ -219,8 +276,8 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.quotaFooter}>
             <Text style={styles.quotaStatusText}>
               {quotaUsage.dailyRemaining > 0
-                ? `${quotaUsage.dailyRemaining} slot(s) available today`
-                : 'Daily quota limit reached'}
+                ? `${quotaUsage.dailyRemaining} ${t('dailyRemainingText')}`
+                : t('dailyLimitReached')}
             </Text>
             <Text style={styles.quotaPercent}>
               {Math.round((quotaUsage.dailyUsage / VKU_QUOTA_LIMITS.maxDailySlots) * 100)}%
@@ -232,8 +289,8 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.quotaCard}>
           <View style={styles.quotaHeader}>
             <View>
-              <Text style={styles.quotaTitle}>Weekly Quota</Text>
-              <Text style={styles.quotaDesc}>Maximum 6 slots across rolling 7 days</Text>
+              <Text style={styles.quotaTitle}>{t('weeklyQuotaTitle')}</Text>
+              <Text style={styles.quotaDesc}>{t('weeklyQuotaDesc')}</Text>
             </View>
             <Text style={styles.quotaCount}>
               {quotaUsage.weeklyUsage} / {VKU_QUOTA_LIMITS.maxWeeklySlots}
@@ -258,8 +315,8 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.quotaFooter}>
             <Text style={styles.quotaStatusText}>
               {quotaUsage.weeklyRemaining > 0
-                ? `${quotaUsage.weeklyRemaining} slot(s) available this week`
-                : 'Weekly quota limit reached'}
+                ? `${quotaUsage.weeklyRemaining} ${t('weeklyRemainingText')}`
+                : t('weeklyLimitReached')}
             </Text>
             <Text style={styles.quotaPercent}>
               {Math.round((quotaUsage.weeklyUsage / VKU_QUOTA_LIMITS.maxWeeklySlots) * 100)}%
@@ -271,8 +328,8 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.quotaCard}>
           <View style={styles.quotaHeader}>
             <View>
-              <Text style={styles.quotaTitle}>Active Future Bookings</Text>
-              <Text style={styles.quotaDesc}>Maximum 3 simultaneous future bookings</Text>
+              <Text style={styles.quotaTitle}>{t('futureQuotaTitle')}</Text>
+              <Text style={styles.quotaDesc}>{t('futureQuotaDesc')}</Text>
             </View>
             <Text style={styles.quotaCount}>
               {quotaUsage.activeFutureCount} / {VKU_QUOTA_LIMITS.maxActiveFutureBookings}
@@ -297,8 +354,8 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.quotaFooter}>
             <Text style={styles.quotaStatusText}>
               {quotaUsage.activeFutureRemaining > 0
-                ? `${quotaUsage.activeFutureRemaining} slot(s) can still be reserved`
-                : 'Maximum simultaneous bookings reached'}
+                ? `${quotaUsage.activeFutureRemaining} ${t('futureRemainingText')}`
+                : t('futureLimitReached')}
             </Text>
             <Text style={styles.quotaPercent}>
               {Math.round(
@@ -314,7 +371,7 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Demo Controls & Testing Suite */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DEMO & EVALUATION CONTROLS</Text>
+        <Text style={styles.sectionTitle}>{t('demoControlsTitle')}</Text>
 
         {pendingSyncCount > 0 && (
           <TouchableOpacity
@@ -328,7 +385,7 @@ export const ProfileScreen: React.FC = () => {
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <Text style={styles.syncButtonText}>
-                Sync Pending Outbox ({pendingSyncCount})
+                {t('syncOutboxBtn')} ({pendingSyncCount})
               </Text>
             )}
           </TouchableOpacity>
@@ -340,17 +397,17 @@ export const ProfileScreen: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel="Reset demo state and bookings"
         >
-          <Text style={styles.resetButtonText}>Reset Demo State & Clear Cache</Text>
+          <Text style={styles.resetButtonText}>{t('resetDemoBtn')}</Text>
         </TouchableOpacity>
 
         {/* Technical Architecture Footnote */}
         <View style={styles.specsCard}>
-          <Text style={styles.specsTitle}>Academic Implementation Specs</Text>
-          <Text style={styles.specsItem}>• Engine: React Native 0.86 / Expo SDK 57</Text>
-          <Text style={styles.specsItem}>• Database: PostgreSQL 15+ Advisory Lock book_slot()</Text>
-          <Text style={styles.specsItem}>• Concurrency: Partial Unique Index idx_bookings_active_slot</Text>
-          <Text style={styles.specsItem}>• Offline: Deterministic Sequential Outbox Queue</Text>
-          <Text style={styles.specsItem}>• State: Zustand with Safe AsyncStorage Persistence</Text>
+          <Text style={styles.specsTitle}>{t('systemDiagnosticsTitle')}</Text>
+          <Text style={styles.specsItem}>• {t('engineSpec')}</Text>
+          <Text style={styles.specsItem}>• {t('databaseSpec')}</Text>
+          <Text style={styles.specsItem}>• {t('concurrencySpec')}</Text>
+          <Text style={styles.specsItem}>• {t('offlineSpec')}</Text>
+          <Text style={styles.specsItem}>• {t('stateSpec')}</Text>
         </View>
       </View>
     </ScrollView>
@@ -626,5 +683,68 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#64748b',
     lineHeight: 18,
+  },
+  languageCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 14,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  languageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  languageTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  languageActiveText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0284c7',
+  },
+  languageButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  langBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    gap: 8,
+  },
+  langBtnActive: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#0284c7',
+  },
+  langFlag: {
+    fontSize: 18,
+  },
+  langBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  langBtnTextActive: {
+    color: '#0369a1',
+    fontWeight: '800',
   },
 });

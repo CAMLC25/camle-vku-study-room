@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Building, Equipment, RoomFilterState } from '../types/room';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface FilterChipsProps {
   filters: RoomFilterState;
@@ -15,13 +16,6 @@ interface FilterChipsProps {
 }
 
 const BUILDINGS: (Building | 'ALL')[] = ['ALL', 'A', 'B', 'C', 'V'];
-
-const CAPACITY_OPTIONS = [
-  { label: 'All Capacities', min: 2, max: 20 },
-  { label: '2–4 Pods', min: 2, max: 4 },
-  { label: '5–10 Teams', min: 5, max: 10 },
-  { label: '11–20 Labs', min: 11, max: 20 },
-];
 
 const EQUIPMENT_OPTIONS: Equipment[] = [
   'Projector',
@@ -35,6 +29,22 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
   onUpdateFilters,
   onResetFilters,
 }) => {
+  const { t } = useTranslation();
+
+  const capacityOptions = [
+    { label: t('capacityAll'), min: 2, max: 20 },
+    { label: t('capacitySmall'), min: 2, max: 4 },
+    { label: t('capacityMedium'), min: 5, max: 10 },
+    { label: t('capacityLarge'), min: 11, max: 20 },
+  ];
+
+  const equipmentLabels: Record<Equipment, string> = {
+    'Projector': t('equipmentProjector'),
+    'Whiteboard': t('equipmentWhiteboard'),
+    'High-spec PC': t('equipmentHighSpecPC'),
+    'AC': t('equipmentAC'),
+  };
+
   const toggleEquipment = (eq: Equipment) => {
     const isSelected = filters.selectedEquipment.includes(eq);
     const updated = isSelected
@@ -54,7 +64,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
     <View style={styles.container}>
       {/* 1. Building Row */}
       <View style={styles.filterSection}>
-        <Text style={styles.sectionLabel}>Building:</Text>
+        <Text style={styles.sectionLabel}>{t('buildingLabel')}:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -75,7 +85,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
                     isSelected && styles.chipTextActive,
                   ]}
                 >
-                  {b === 'ALL' ? 'All Buildings' : `Bldg ${b}`}
+                  {b === 'ALL' ? t('allBuildings') : `${t('buildingLabel')} ${b}`}
                 </Text>
               </TouchableOpacity>
             );
@@ -85,13 +95,13 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
 
       {/* 2. Capacity Row */}
       <View style={styles.filterSection}>
-        <Text style={styles.sectionLabel}>Capacity:</Text>
+        <Text style={styles.sectionLabel}>{t('seats')}:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsScroll}
         >
-          {CAPACITY_OPTIONS.map((cap) => {
+          {capacityOptions.map((cap) => {
             const isSelected =
               filters.capacityMin === cap.min && filters.capacityMax === cap.max;
             return (
@@ -123,10 +133,10 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
       {/* 3. Equipment Row */}
       <View style={styles.filterSection}>
         <View style={styles.equipmentLabelRow}>
-          <Text style={styles.sectionLabel}>Equipment:</Text>
+          <Text style={styles.sectionLabel}>{t('equipmentTitle')}:</Text>
           {isFilterActive && (
             <TouchableOpacity onPress={onResetFilters} style={styles.resetButton}>
-              <Text style={styles.resetButtonText}>Reset All</Text>
+              <Text style={styles.resetButtonText}>{t('clearFilters')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -150,7 +160,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
                     isSelected && styles.chipTextActive,
                   ]}
                 >
-                  {isSelected ? `✓ ${eq}` : `+ ${eq}`}
+                  {isSelected ? `✓ ${equipmentLabels[eq]}` : `+ ${equipmentLabels[eq]}`}
                 </Text>
               </TouchableOpacity>
             );

@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useBookingStore } from '../store/useBookingStore';
+import { useTranslation } from '../store/useLanguageStore';
 
 export const NetworkBanner: React.FC = () => {
+  const { t } = useTranslation();
   const { isConnected, isSimulatedOffline, toggleSimulatedOffline, isSyncing, syncNow } =
     useNetworkStatus();
 
@@ -43,15 +45,15 @@ export const NetworkBanner: React.FC = () => {
         <View>
           <Text style={styles.bannerTitle}>
             {isOffline
-              ? `Offline — showing cached data`
+              ? t('offlineBannerTitle')
               : isSyncing
-              ? 'Syncing changes with campus server...'
-              : `${pendingCount} changes awaiting connection`}
+              ? t('syncingBannerTitle')
+              : `${pendingCount} ${t('pendingChangesNotice')}`}
           </Text>
           <Text style={styles.bannerSubtitle}>
             {isOffline
-              ? `Last updated at ${formatLastUpdatedTime()}${
-                  pendingCount > 0 ? ` • ${pendingCount} pending offline action(s)` : ''
+              ? `${t('offlineBannerSubtitle')} ${formatLastUpdatedTime()}${
+                  pendingCount > 0 ? ` • ${pendingCount} ${t('pendingChangesNotice')}` : ''
                 }`
               : `Connected to VKU server`}
           </Text>
@@ -64,7 +66,7 @@ export const NetworkBanner: React.FC = () => {
         activeOpacity={0.7}
       >
         <Text style={styles.actionButtonText}>
-          {isOffline ? 'Go Online' : 'Sync Now'}
+          {isOffline ? t('goOnline') : t('syncNow')}
         </Text>
       </TouchableOpacity>
     </View>

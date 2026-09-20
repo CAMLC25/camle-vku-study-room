@@ -7,23 +7,45 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { getBookingHorizonDays, DayOption } from '../utils/date';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface DateSelectorProps {
   selectedDate: string; // ISO 'YYYY-MM-DD'
   onSelectDate: (date: string) => void;
 }
 
+const VI_DAYS_SHORT: Record<string, string> = {
+  Sun: 'CN',
+  Mon: 'T2',
+  Tue: 'T3',
+  Wed: 'T4',
+  Thu: 'T5',
+  Fri: 'T6',
+  Sat: 'T7',
+};
+
 export const DateSelector: React.FC<DateSelectorProps> = ({
   selectedDate,
   onSelectDate,
 }) => {
+  const { t, language } = useTranslation();
   const horizonDays = useMemo(() => getBookingHorizonDays(), []);
+
+  const formatDayName = (day: DayOption) => {
+    if (day.isToday) {
+      return language === 'vi' ? 'HÔM NAY' : 'TODAY';
+    }
+    if (language === 'vi') {
+      return VI_DAYS_SHORT[day.dayOfWeek] || day.dayOfWeek.toUpperCase();
+    }
+    return day.dayOfWeek.toUpperCase();
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Select Date</Text>
-        <Text style={styles.horizonSubtitle}>7-day reservation window</Text>
+        <Text style={styles.title}>{t('selectDateTitle')}</Text>
+        <Text style={styles.horizonSubtitle}>{t('dateWindowSubtitle')}</Text>
       </View>
 
       <ScrollView
@@ -45,7 +67,7 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
               onPress={() => onSelectDate(day.dateString)}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={`Select ${day.label}`}
+              accessibilityLabel={`${day.isToday ? t('today') : day.label}`}
               accessibilityState={{ selected: isSelected }}
             >
               <Text
@@ -54,7 +76,7 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
                   isSelected && styles.textSelected,
                 ]}
               >
-                {day.isToday ? 'TODAY' : day.dayOfWeek.toUpperCase()}
+                {formatDayName(day)}
               </Text>
 
               <Text

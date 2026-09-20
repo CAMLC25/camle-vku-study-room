@@ -22,6 +22,7 @@ import { Booking } from '../types/booking';
 import { bookingService } from '../services/bookingService';
 import { outboxService } from '../services/outboxService';
 import { notificationService } from '../services/notificationService';
+import { useTranslation } from '../store/useLanguageStore';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'MyBookings'>,
@@ -31,6 +32,7 @@ type Props = CompositeScreenProps<
 type FilterTab = 'ALL' | 'ACTIVE' | 'PENDING' | 'CONFLICTED' | 'CANCELLED';
 
 export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
+  const { t, language } = useTranslation();
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [passBooking, setPassBooking] = useState<Booking | null>(null);
 
@@ -76,12 +78,12 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
       if (!booking) return;
 
       Alert.alert(
-        'Cancel Reservation',
-        `Are you sure you want to cancel your reservation for ${booking.roomName}?`,
+        t('cancelConfirmTitle'),
+        `${t('cancelConfirmMsg')}\n(${booking.roomName})`,
         [
-          { text: 'Keep Reservation', style: 'cancel' },
+          { text: t('keepReservation'), style: 'cancel' },
           {
-            text: 'Yes, Cancel',
+            text: t('confirmCancelBtn'),
             style: 'destructive',
             onPress: async () => {
               // Cancel local scheduled notification reminder if exists
@@ -93,8 +95,8 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
                 // Queue cancellation in outbox
                 outboxService.queueCancellation(booking);
                 Alert.alert(
-                  'Cancellation Queued',
-                  'You are currently offline. Your cancellation request has been added to the outbox and will execute when you reconnect.',
+                  t('cancelQueuedTitle'),
+                  t('cancelQueuedMsg'),
                   [{ text: 'OK' }]
                 );
               } else {
@@ -106,12 +108,12 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
                   );
                   if (res.success) {
                     updateBooking(bookingId, { status: 'CANCELLED' });
-                    Alert.alert('Success', 'Your reservation has been cancelled.');
+                    Alert.alert(t('actionSuccess'), t('cancelSuccess'));
                   } else {
-                    Alert.alert('Error', res.error || 'Failed to cancel reservation.');
+                    Alert.alert(t('actionError'), res.error || t('errUnknown'));
                   }
                 } catch (e: any) {
-                  Alert.alert('Error', e?.message || 'Failed to cancel reservation.');
+                  Alert.alert(t('actionError'), e?.message || t('errUnknown'));
                 }
               }
             },
@@ -119,7 +121,7 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
         ]
       );
     },
-    [myBookings, isOffline, currentStudentId, updateBooking]
+    [myBookings, isOffline, currentStudentId, updateBooking, t]
   );
 
   const handleResolveConflict = useCallback(
@@ -137,9 +139,9 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>My Bookings</Text>
+          <Text style={styles.title}>{t('myBookingsTitle')}</Text>
           <Text style={styles.subtitle}>
-            Manage your study room reservations & sync queue
+            {t('myBookingsSubtitle')}
           </Text>
         </View>
 
@@ -148,33 +150,41 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ALL' && styles.tabActive]}
             onPress={() => setActiveTab('ALL')}
+            accessibilityRole="tab"
+            accessibilityLabel={`${t('tabAll')}, ${tabCounts.ALL}`}
           >
             <Text style={[styles.tabText, activeTab === 'ALL' && styles.tabTextActive]}>
-              All ({tabCounts.ALL})
+              {t('tabAll')} ({tabCounts.ALL})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ACTIVE' && styles.tabActive]}
             onPress={() => setActiveTab('ACTIVE')}
+            accessibilityRole="tab"
+            accessibilityLabel={`${t('tabActive')}, ${tabCounts.ACTIVE}`}
           >
             <Text style={[styles.tabText, activeTab === 'ACTIVE' && styles.tabTextActive]}>
-              Active ({tabCounts.ACTIVE})
+              {t('tabActive')} ({tabCounts.ACTIVE})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, activeTab === 'PENDING' && styles.tabActive]}
             onPress={() => setActiveTab('PENDING')}
+            accessibilityRole="tab"
+            accessibilityLabel={`${t('tabPending')}, ${tabCounts.PENDING}`}
           >
             <Text style={[styles.tabText, activeTab === 'PENDING' && styles.tabTextActive]}>
-              Pending ({tabCounts.PENDING})
+              {t('tabPending')} ({tabCounts.PENDING})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, activeTab === 'CONFLICTED' && styles.tabActive]}
             onPress={() => setActiveTab('CONFLICTED')}
+            accessibilityRole="tab"
+            accessibilityLabel={`${t('tabConflicted')}, ${tabCounts.CONFLICTED}`}
           >
             <Text
               style={[
@@ -183,7 +193,7 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
                 tabCounts.CONFLICTED > 0 && styles.tabTextConflict,
               ]}
             >
-              Conflicts ({tabCounts.CONFLICTED})
+              {t('tabConflicted')} ({tabCounts.CONFLICTED})
             </Text>
           </TouchableOpacity>
         </View>
@@ -208,14 +218,10 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           )}
           ListEmptyComponent={
             <EmptyState
-              title={
-                activeTab === 'ALL'
-                  ? 'No Bookings Yet'
-                  : `No ${activeTab.toLowerCase()} bookings`
-              }
-              subtitle="Browse available campus study rooms to make a reservation."
+              title={t('emptyBookingsTitle')}
+              subtitle={t('emptyBookingsSubtitle')}
               onAction={() => navigation.navigate('MainTabs', { screen: 'Rooms' })}
-              actionText="Explore Rooms"
+              actionText={t('exploreRooms')}
             />
           }
         />

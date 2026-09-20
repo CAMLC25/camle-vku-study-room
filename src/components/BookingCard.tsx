@@ -9,6 +9,7 @@ import {
 import { Booking } from '../types/booking';
 import { TIME_SLOT_DEFINITIONS } from '../types/slot';
 import { formatDisplayDate } from '../utils/date';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface BookingCardProps {
   booking: Booking;
@@ -23,27 +24,28 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   onViewPass,
   onResolveConflict,
 }) => {
+  const { t } = useTranslation();
   const slotDef = TIME_SLOT_DEFINITIONS[booking.slotIndex];
 
   const getStatusBadgeConfig = () => {
     switch (booking.status) {
       case 'CONFIRMED':
         return {
-          label: 'Confirmed',
+          label: t('tabActive'),
           bg: '#ecfdf5',
           color: '#059669',
           borderColor: '#a7f3d0',
         };
       case 'PENDING_SYNC':
         return {
-          label: 'Awaiting Confirmation (Offline)',
+          label: t('tabPending'),
           bg: '#faf5ff',
           color: '#7e22ce',
           borderColor: '#e9d5ff',
         };
       case 'CONFLICTED':
         return {
-          label: 'Conflict: Slot Taken',
+          label: t('tabConflicted'),
           bg: '#fef2f2',
           color: '#dc2626',
           borderColor: '#fca5a5',
@@ -51,7 +53,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       case 'CANCELLED':
       default:
         return {
-          label: 'Cancelled',
+          label: t('tabCancelled'),
           bg: '#f1f5f9',
           color: '#64748b',
           borderColor: '#e2e8f0',
@@ -76,7 +78,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <View style={styles.roomInfo}>
           <Text style={styles.roomName}>{booking.roomName}</Text>
           <Text style={styles.location}>
-            Building {booking.building} • Floor {booking.floor}
+            {t('buildingLabel')} {booking.building} • {t('floor')} {booking.floor}
           </Text>
         </View>
 
@@ -96,16 +98,16 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Date:</Text>
+          <Text style={styles.metaLabel}>{t('bookingDate')}:</Text>
           <Text style={styles.metaValue}>
             {formatDisplayDate(booking.bookingDate)}
           </Text>
         </View>
 
         <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Time:</Text>
+          <Text style={styles.metaLabel}>{t('bookingTime')}:</Text>
           <Text style={styles.metaValueHighlight}>
-            Slot {booking.slotIndex + 1} ({slotDef?.label})
+            {t('slotPrefix')} {booking.slotIndex + 1} ({slotDef?.label})
           </Text>
         </View>
       </View>
@@ -113,9 +115,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       {/* Conflicted Warning Banner */}
       {isConflicted && (
         <View style={styles.conflictNotice}>
-          <Text style={styles.conflictTitle}>⚠️ Concurrency Conflict</Text>
+          <Text style={styles.conflictTitle}>{t('conflictNoticeTitle')}</Text>
           <Text style={styles.conflictText}>
-            Another student reserved this slot before your device reconnected. This reservation could not be confirmed.
+            {t('conflictNoticeText')}
           </Text>
         </View>
       )}
@@ -127,8 +129,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             style={styles.passButton}
             onPress={() => onViewPass(booking.id)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('viewQRPassBtn')}
           >
-            <Text style={styles.passButtonText}>View QR Pass</Text>
+            <Text style={styles.passButtonText}>{t('viewQRPassBtn')}</Text>
           </TouchableOpacity>
         )}
 
@@ -137,8 +141,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             style={styles.cancelButton}
             onPress={() => onCancel(booking.id)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('cancelBookingBtn')}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t('cancelBookingBtn')}</Text>
           </TouchableOpacity>
         )}
 
@@ -147,14 +153,16 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             style={styles.resolveButton}
             onPress={() => onResolveConflict(booking)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('findAlternativeSlot')}
           >
-            <Text style={styles.resolveButtonText}>Find Alternative Slot</Text>
+            <Text style={styles.resolveButtonText}>{t('findAlternativeSlot')}</Text>
           </TouchableOpacity>
         )}
 
         {isPendingSync && (
           <Text style={styles.pendingHint}>
-            ⏳ Will sync automatically when connection restores.
+            {t('pendingSyncHint')}
           </Text>
         )}
       </View>

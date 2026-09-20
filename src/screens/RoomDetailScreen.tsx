@@ -13,6 +13,7 @@ import { Image } from 'expo-image';
 import { RootStackParamList } from '../navigation/types';
 import { useBookingStore } from '../store/useBookingStore';
 import { useRoomAvailability } from '../hooks/useRoomAvailability';
+import { useTranslation } from '../store/useLanguageStore';
 import { DateSelector } from '../components/DateSelector';
 import { SlotGrid } from '../components/SlotGrid';
 import { ConfirmBookingModal } from '../components/ConfirmBookingModal';
@@ -26,6 +27,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'RoomDetail'>;
 
 export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { roomId } = route.params;
+  const { t, language } = useTranslation();
 
   // Narrow Zustand selectors
   const room = useBookingStore((state) =>
@@ -57,19 +59,19 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         setModalSlotIndex(slotIndex);
       } else if (slot && slot.state === 'MINE') {
         Alert.alert(
-          'Your Reservation',
-          `You have already booked Slot ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) on ${formatDisplayDate(selectedDate)}.`,
+          t('yourReservationTitle'),
+          `${t('yourReservationMsg')}\n${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`,
           [{ text: 'OK' }]
         );
       } else if (slot && slot.state === 'HELD_BY_OTHER') {
         Alert.alert(
-          'Slot Currently Held',
-          'Another student opened checkout for this slot within the last 90 seconds. If they abandon checkout, the slot will become available automatically.',
+          t('heldByOtherTitle'),
+          t('heldByOtherMsg'),
           [{ text: 'OK' }]
         );
       }
     },
-    [slots, selectedDate]
+    [slots, selectedDate, t]
   );
 
   const handleBookingSuccess = useCallback(
@@ -79,11 +81,11 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
       if (booking.status === 'PENDING_SYNC') {
         Alert.alert(
-          'Booking Queued Offline ⏳',
-          `Your reservation request for Room ${booking.roomName} has been saved to your outbox in PENDING_SYNC state.\n\nIt will be synced sequentially when you reconnect.`,
+          t('bookingQueuedOfflineTitle'),
+          `${t('bookingQueuedOfflineMsg')}\n\n${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}`,
           [
             {
-              text: 'View in My Bookings',
+              text: t('viewInMyBookings'),
               onPress: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
             },
             { text: 'OK', style: 'cancel' },
@@ -117,29 +119,29 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       await refresh();
 
       Alert.alert(
-        isReplay ? 'Booking Already Active' : 'Reservation Confirmed! 🎉',
-        `Room ${booking.roomName}\nDate: ${formatDisplayDate(booking.bookingDate)}\nSlot: ${TIME_SLOT_DEFINITIONS[booking.slotIndex].label}\n\nYour spot has been secured. Reminder set 15m before session.`,
+        isReplay ? t('bookingAlreadyActiveTitle') : t('reservationConfirmedTitle'),
+        `${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}\n${t('bookingDate')}: ${formatDisplayDate(booking.bookingDate)}\n${t('bookingTime')}: ${TIME_SLOT_DEFINITIONS[booking.slotIndex].label}`,
         [
           {
-            text: 'View in My Bookings',
+            text: t('viewInMyBookings'),
             onPress: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
           },
-          { text: 'Done', style: 'cancel' },
+          { text: t('close'), style: 'cancel' },
         ]
       );
     },
-    [addBooking, updateBooking, currentStudentId, selectedDate, setQuotaUsage, refresh, navigation]
+    [addBooking, updateBooking, currentStudentId, selectedDate, setQuotaUsage, refresh, navigation, t, language]
   );
 
   if (!room) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.notFoundText}>Room not found</Text>
+        <Text style={styles.notFoundText}>{t('roomNotFound')}</Text>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -163,18 +165,18 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.roomName}>{room.name}</Text>
             <View style={styles.buildingBadge}>
               <Text style={styles.buildingBadgeText}>
-                Bldg {room.building} • Fl {room.floor}
+                {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
               </Text>
             </View>
           </View>
           <Text style={styles.capacityText}>
-            Max Capacity: {room.capacity} students
+            {t('maxCapacity')}: {room.capacity} {t('students')}
           </Text>
         </View>
 
         {/* Equipment Chips */}
         <View style={styles.equipmentSection}>
-          <Text style={styles.sectionLabel}>Equipment & Facilities:</Text>
+          <Text style={styles.sectionLabel}>{t('equipmentTitle')}:</Text>
           <View style={styles.equipmentRow}>
             {room.equipment.map((eq) => (
               <View key={eq} style={styles.equipmentChip}>
@@ -199,7 +201,7 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             {isLoading && (
               <View style={styles.syncRow}>
                 <ActivityIndicator size="small" color="#0284c7" />
-                <Text style={styles.syncText}>Syncing realtime...</Text>
+                <Text style={styles.syncText}>{t('syncingRealtime')}</Text>
               </View>
             )}
           </View>

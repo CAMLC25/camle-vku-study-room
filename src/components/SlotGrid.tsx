@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { SlotAvailability, SlotIndex } from '../types/slot';
 import { SlotCell } from './SlotCell';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface SlotGridProps {
   slots: Record<SlotIndex, SlotAvailability>;
@@ -23,11 +24,13 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
   onSimulateRemoteBooking,
   isSimulateAllowed = true,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Daily Time Slots</Text>
-        <Text style={styles.subtitle}>Four 2-hour study sessions</Text>
+        <Text style={styles.title}>{t('dailySlotsTitle')}</Text>
+        <Text style={styles.subtitle}>{t('dailySlotsSubtitle')}</Text>
       </View>
 
       <View style={styles.slotsList}>
@@ -48,11 +51,11 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
       {isSimulateAllowed && onSimulateRemoteBooking && (
         <View style={styles.simContainer}>
           <View style={styles.simHeader}>
-            <Text style={styles.simBadge}>GRADING / DEMO HELPER</Text>
-            <Text style={styles.simTitle}>Simulate Realtime Event</Text>
+            <Text style={styles.simBadge}>{t('gradingHelperBadge')}</Text>
+            <Text style={styles.simTitle}>{t('simRealtimeEvent')}</Text>
           </View>
           <Text style={styles.simDescription}>
-            Trigger a simulated remote booking from another student on this room/date:
+            {t('simRealtimeDesc')}
           </Text>
           <View style={styles.simButtonsRow}>
             {SLOT_INDICES.map((idx) => (
@@ -62,7 +65,7 @@ export const SlotGrid: React.FC<SlotGridProps> = ({
                 onPress={() => onSimulateRemoteBooking(idx)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.simButtonText}>Book Slot {idx + 1}</Text>
+                <Text style={styles.simButtonText}>{t('simBookSlotPrefix')} {idx + 1}</Text>
               </TouchableOpacity>
             ))}
           </View>

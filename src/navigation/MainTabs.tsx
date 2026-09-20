@@ -5,9 +5,13 @@ import { RoomListScreen } from '../screens/RoomListScreen';
 import { MyBookingsScreen } from '../screens/MyBookingsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 
+import { useTranslation } from '../store/useLanguageStore';
+
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabs: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -31,21 +35,21 @@ export const MainTabs: React.FC = () => {
         name="Rooms"
         component={RoomListScreen}
         options={{
-          tabBarLabel: 'Rooms',
+          tabBarLabel: t('navRooms'),
         }}
       />
       <Tab.Screen
         name="MyBookings"
         component={MyBookingsScreen}
         options={{
-          tabBarLabel: 'My Bookings',
+          tabBarLabel: t('navMyBookings'),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: t('navProfile'),
         }}
       />
     </Tab.Navigator>

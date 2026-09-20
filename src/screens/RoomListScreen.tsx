@@ -21,6 +21,7 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterChips } from '../components/FilterChips';
 import { EmptyState } from '../components/EmptyState';
 import { NetworkBanner } from '../components/NetworkBanner';
+import { useTranslation } from '../store/useLanguageStore';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Rooms'>,
@@ -28,6 +29,7 @@ type Props = CompositeScreenProps<
 >;
 
 export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
+  const { t, language } = useTranslation();
   // Narrow Zustand selectors (no whole-store subscriptions)
   const rooms = useBookingStore((state) => state.rooms);
   const isLoading = useBookingStore((state) => state.isRoomsLoading);
@@ -139,9 +141,13 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View>
-              <Text style={styles.appTitle}>VKU Study Spaces</Text>
+              <Text style={styles.appTitle}>
+                {language === 'vi' ? 'Không gian học tập VKU' : 'VKU Study Spaces'}
+              </Text>
               <Text style={styles.appSubtitle}>
-                {filteredRooms.length} of {rooms.length} rooms match
+                {language === 'vi'
+                  ? `Hiển thị ${filteredRooms.length} / ${rooms.length} phòng học`
+                  : `${filteredRooms.length} of ${rooms.length} rooms match`}
               </Text>
             </View>
             <TouchableOpacity
@@ -158,7 +164,7 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
                   (showFilters || activeFilterCount > 0) && styles.filterToggleTextActive,
                 ]}
               >
-                Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
+                {t('filterTitle')} {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
               </Text>
             </TouchableOpacity>
           </View>
@@ -168,7 +174,7 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
             <SearchBar
               value={filters.searchQuery}
               onChangeText={handleSearchChange}
-              placeholder="Search by room name or code..."
+              placeholder={t('searchPlaceholder')}
             />
           </View>
         </View>
@@ -186,14 +192,16 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
         {isLoading && rooms.length === 0 ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color="#0284c7" />
-            <Text style={styles.loadingText}>Loading campus study rooms...</Text>
+            <Text style={styles.loadingText}>{t('loading')}</Text>
           </View>
         ) : error && rooms.length === 0 ? (
           <View style={styles.centerContainer}>
-            <Text style={styles.errorTitle}>Unable to Load Rooms</Text>
+            <Text style={styles.errorTitle}>
+              {language === 'vi' ? 'Không thể tải danh sách phòng' : 'Unable to Load Rooms'}
+            </Text>
             <Text style={styles.errorSubtitle}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={fetchRooms}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('refresh')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -219,10 +227,10 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
             }
             ListEmptyComponent={
               <EmptyState
-                title="No Matching Rooms"
-                subtitle="We couldn't find any study room matching your search and filter criteria."
+                title={t('emptyRoomsTitle')}
+                subtitle={t('emptyRoomsSubtitle')}
                 onAction={resetFilters}
-                actionText="Reset All Filters"
+                actionText={t('clearFilters')}
               />
             }
           />

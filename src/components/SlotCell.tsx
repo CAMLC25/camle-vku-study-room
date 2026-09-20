@@ -11,6 +11,7 @@ import {
   SlotState,
   TIME_SLOT_DEFINITIONS,
 } from '../types/slot';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface SlotCellProps {
   slotIndex: SlotIndex;
@@ -25,6 +26,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
   onPress,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const definition = TIME_SLOT_DEFINITIONS[slotIndex];
 
   const isInteractive = state === 'AVAILABLE' || state === 'MINE';
@@ -33,7 +35,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
     switch (state) {
       case 'AVAILABLE':
         return {
-          badgeText: 'Available',
+          badgeText: t('slotAvailable'),
           badgeBg: '#ecfdf5',
           badgeColor: '#059669',
           cardBorder: '#a7f3d0',
@@ -41,7 +43,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
         };
       case 'MINE':
         return {
-          badgeText: 'Your Booking',
+          badgeText: t('slotMine'),
           badgeBg: '#e0f2fe',
           badgeColor: '#0284c7',
           cardBorder: '#38bdf8',
@@ -49,7 +51,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
         };
       case 'HELD_BY_OTHER':
         return {
-          badgeText: 'Temporarily Held',
+          badgeText: t('slotHeldByOther'),
           badgeBg: '#fef3c7',
           badgeColor: '#d97706',
           cardBorder: '#fde68a',
@@ -57,7 +59,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
         };
       case 'PENDING_SYNC':
         return {
-          badgeText: 'Awaiting Sync',
+          badgeText: t('slotPendingSync'),
           badgeBg: '#f3e8ff',
           badgeColor: '#7e22ce',
           cardBorder: '#d8b4fe',
@@ -66,7 +68,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
       case 'BOOKED':
       default:
         return {
-          badgeText: 'Booked',
+          badgeText: t('slotBooked'),
           badgeBg: '#f1f5f9',
           badgeColor: '#64748b',
           cardBorder: '#e2e8f0',
@@ -90,11 +92,11 @@ export const SlotCell: React.FC<SlotCellProps> = ({
       activeOpacity={isInteractive ? 0.75 : 1}
       disabled={!isInteractive || disabled}
       accessibilityRole="button"
-      accessibilityLabel={`Slot ${definition.label}, ${config.badgeText}`}
+      accessibilityLabel={`${t('slotPrefix')} ${definition.label}, ${config.badgeText}`}
     >
       <View style={styles.leftSection}>
         <View style={styles.slotBadge}>
-          <Text style={styles.slotIndexText}>SLOT {slotIndex + 1}</Text>
+          <Text style={styles.slotIndexText}>{t('slotPrefix')} {slotIndex + 1}</Text>
         </View>
         <Text style={styles.timeLabel}>{definition.label}</Text>
       </View>
@@ -111,7 +113,7 @@ export const SlotCell: React.FC<SlotCellProps> = ({
           </Text>
         </View>
         {state === 'AVAILABLE' && (
-          <Text style={styles.actionPrompt}>Tap to Book →</Text>
+          <Text style={styles.actionPrompt}>{t('tapToBook')}</Text>
         )}
       </View>
     </TouchableOpacity>

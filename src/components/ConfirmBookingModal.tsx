@@ -18,6 +18,7 @@ import { formatDisplayDate } from '../utils/date';
 import { mapErrorToDomain, DomainError } from '../utils/errors';
 import { outboxService } from '../services/outboxService';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useTranslation } from '../store/useLanguageStore';
 
 interface ConfirmBookingModalProps {
   visible: boolean;
@@ -40,6 +41,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t, language } = useTranslation();
   const [hold, setHold] = useState<BookingHold | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(90);
   const [isHolding, setIsHolding] = useState<boolean>(false);
@@ -140,7 +142,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
       setDomainError(
         mapErrorToDomain({
           errorCode: 'HOLD_EXPIRED',
-          message: 'Your hold has expired. Please re-hold the slot.',
+          message: t('holdExpiredAlert'),
         })
       );
       return;
@@ -205,11 +207,13 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Confirm Reservation</Text>
+            <Text style={styles.title}>{t('confirmModalTitle')}</Text>
             <TouchableOpacity
               onPress={handleDismiss}
               style={styles.closeButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('close')}
             >
               <Text style={styles.closeText}>✕</Text>
             </TouchableOpacity>
@@ -231,8 +235,8 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
                 ]}
               >
                 {isHoldExpired
-                  ? 'Soft hold expired'
-                  : `Reserved for you for ${secondsRemaining}s`}
+                  ? t('softHoldExpiredText')
+                  : `${t('softHoldActiveText')} ${secondsRemaining}${t('holdSeconds')}`}
               </Text>
             </View>
             {!isHoldExpired && (
@@ -245,29 +249,29 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
           {/* Booking Summary Card */}
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Room:</Text>
+              <Text style={styles.summaryLabel}>{t('roomDetails')}:</Text>
               <Text style={styles.summaryValue}>{room.name}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Location:</Text>
+              <Text style={styles.summaryLabel}>{t('locationLabel')}:</Text>
               <Text style={styles.summaryValue}>
-                Building {room.building} • Floor {room.floor}
+                {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Date:</Text>
+              <Text style={styles.summaryLabel}>{t('bookingDate')}:</Text>
               <Text style={styles.summaryValue}>
                 {formatDisplayDate(bookingDate)}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Time Slot:</Text>
+              <Text style={styles.summaryLabel}>{t('bookingTime')}:</Text>
               <Text style={styles.summaryValueHighlight}>
-                Slot {slotIndex + 1} ({slotDef.label})
+                {t('slotPrefix')} {slotIndex + 1} ({slotDef.label})
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Student:</Text>
+              <Text style={styles.summaryLabel}>{t('borrower')}:</Text>
               <Text style={styles.summaryValue}>{studentName}</Text>
             </View>
           </View>
@@ -275,24 +279,24 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
           {/* Quota Usage Information */}
           {quota && (
             <View style={styles.quotaBox}>
-              <Text style={styles.quotaTitle}>Your Quota Status</Text>
+              <Text style={styles.quotaTitle}>{t('quotaStatusTitle')}</Text>
               <View style={styles.quotaStatsRow}>
                 <View style={styles.quotaStatItem}>
-                  <Text style={styles.quotaStatLabel}>Today</Text>
+                  <Text style={styles.quotaStatLabel}>{t('today')}</Text>
                   <Text style={styles.quotaStatValue}>
                     {quota.dailyUsage} / {VKU_QUOTA_LIMITS.maxDailySlots}
                   </Text>
                 </View>
                 <View style={styles.quotaStatDivider} />
                 <View style={styles.quotaStatItem}>
-                  <Text style={styles.quotaStatLabel}>This Week</Text>
+                  <Text style={styles.quotaStatLabel}>{t('thisWeek')}</Text>
                   <Text style={styles.quotaStatValue}>
                     {quota.weeklyUsage} / {VKU_QUOTA_LIMITS.maxWeeklySlots}
                   </Text>
                 </View>
                 <View style={styles.quotaStatDivider} />
                 <View style={styles.quotaStatItem}>
-                  <Text style={styles.quotaStatLabel}>Active Future</Text>
+                  <Text style={styles.quotaStatLabel}>{t('activeFuture')}</Text>
                   <Text style={styles.quotaStatValue}>
                     {quota.activeFutureCount} / {VKU_QUOTA_LIMITS.maxActiveFutureBookings}
                   </Text>
@@ -317,7 +321,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
                 onPress={initiateHold}
                 activeOpacity={0.8}
               >
-                <Text style={styles.retryHoldText}>Renew 90s Hold</Text>
+                <Text style={styles.retryHoldText}>{t('renewHoldBtn')}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -332,7 +336,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
                 {isConfirming ? (
                   <ActivityIndicator color="#ffffff" size="small" />
                 ) : (
-                  <Text style={styles.confirmText}>Confirm Reservation</Text>
+                  <Text style={styles.confirmText}>{t('confirmBookingBtn')}</Text>
                 )}
               </TouchableOpacity>
             )}
@@ -342,7 +346,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
               onPress={handleDismiss}
               disabled={isConfirming}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
