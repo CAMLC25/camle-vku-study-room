@@ -211,11 +211,16 @@ export const translations = {
 
     // Error Messages
     errSlotAlreadyBooked: 'Ca học này vừa có sinh viên khác đặt trước.',
+    errSlotHeldByOther: 'Một sinh viên khác đang giữ chỗ ca này (trong vòng 90s). Vui lòng thử lại sau giây lát.',
     errDailyQuotaExceeded: 'Bạn đã đạt giới hạn mượn phòng trong ngày (tối đa 2 ca/ngày).',
     errWeeklyQuotaExceeded: 'Bạn đã đạt giới hạn mượn phòng trong tuần (tối đa 6 ca/tuần).',
     errActiveBookingLimitExceeded: 'Bạn đã đạt giới hạn đặt phòng trước đồng thời (tối đa 3 ca).',
     errOutsideBookingHorizon: 'Chỉ được phép đặt phòng trong phạm vi 7 ngày tới.',
+    errHoldExpired: 'Thời gian giữ chỗ 90 giây đã kết thúc. Vui lòng thử lại.',
+    errNetworkError: 'Không thể kết nối đến máy chủ nhà trường. Vui lòng kiểm tra kết nối mạng.',
     errUnknown: 'Có lỗi xảy ra, vui lòng thử lại.',
+    errCannotBookTitle: 'Không thể đặt phòng',
+    selectAnotherSlot: 'Chọn ca học khác',
   },
 
   en: {
@@ -428,11 +433,16 @@ export const translations = {
 
     // Error Messages
     errSlotAlreadyBooked: 'This slot was just taken by another student.',
+    errSlotHeldByOther: 'Another student is currently checking out this slot (within 90s). Please try again shortly.',
     errDailyQuotaExceeded: 'You have reached your daily booking limit (maximum 2 slots per day).',
     errWeeklyQuotaExceeded: 'You have reached your weekly booking limit (maximum 6 slots per week).',
     errActiveBookingLimitExceeded: 'You have reached the maximum active future booking limit (3 bookings).',
     errOutsideBookingHorizon: 'Bookings are only permitted within a 7-day rolling window.',
+    errHoldExpired: 'Your 90-second soft hold expired. Please try again.',
+    errNetworkError: 'Cannot connect to campus server. Please check your network connection.',
     errUnknown: 'An unexpected error occurred, please try again.',
+    errCannotBookTitle: 'Cannot Book Slot',
+    selectAnotherSlot: 'Select Another Slot',
   },
 };
 

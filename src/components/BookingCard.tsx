@@ -31,6 +31,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     switch (booking.status) {
       case 'CONFIRMED':
         return {
+          icon: '✓',
           label: t('tabActive'),
           bg: '#ecfdf5',
           color: '#059669',
@@ -38,6 +39,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         };
       case 'PENDING_SYNC':
         return {
+          icon: '⏳',
           label: t('tabPending'),
           bg: '#faf5ff',
           color: '#7e22ce',
@@ -45,6 +47,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         };
       case 'CONFLICTED':
         return {
+          icon: '⚠️',
           label: t('tabConflicted'),
           bg: '#fef2f2',
           color: '#dc2626',
@@ -53,6 +56,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       case 'CANCELLED':
       default:
         return {
+          icon: '✕',
           label: t('tabCancelled'),
           bg: '#f1f5f9',
           color: '#64748b',
@@ -74,11 +78,12 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         isConflicted && styles.cardConflicted,
       ]}
     >
+      {/* Ticket Header */}
       <View style={styles.topRow}>
         <View style={styles.roomInfo}>
           <Text style={styles.roomName}>{booking.roomName}</Text>
           <Text style={styles.location}>
-            {t('buildingLabel')} {booking.building} • {t('floor')} {booking.floor}
+            📍 {t('buildingLabel')} {booking.building} • {t('floor')} {booking.floor}
           </Text>
         </View>
 
@@ -88,27 +93,36 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             { backgroundColor: badge.bg, borderColor: badge.borderColor },
           ]}
         >
+          <Text style={[styles.statusIcon, { color: badge.color }]}>{badge.icon}</Text>
           <Text style={[styles.statusText, { color: badge.color }]}>
             {badge.label}
           </Text>
         </View>
       </View>
 
-      <View style={styles.divider} />
+      {/* Ticket Perforation Notch & Dashed Line */}
+      <View style={styles.perforationContainer}>
+        <View style={styles.perforationNotchLeft} />
+        <View style={styles.perforationDashedLine} />
+        <View style={styles.perforationNotchRight} />
+      </View>
 
+      {/* Ticket Body / Meta */}
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>{t('bookingDate')}:</Text>
+          <Text style={styles.metaLabel}>📅 {t('bookingDate')}</Text>
           <Text style={styles.metaValue}>
             {formatDisplayDate(booking.bookingDate)}
           </Text>
         </View>
 
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>{t('bookingTime')}:</Text>
-          <Text style={styles.metaValueHighlight}>
-            {t('slotPrefix')} {booking.slotIndex + 1} ({slotDef?.label})
-          </Text>
+        <View style={styles.metaItemRight}>
+          <Text style={styles.metaLabel}>⏰ {t('bookingTime')}</Text>
+          <View style={styles.slotPill}>
+            <Text style={styles.metaValueHighlight}>
+              {t('slotPrefix')} {booking.slotIndex + 1} ({slotDef?.label})
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -128,10 +142,11 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <TouchableOpacity
             style={styles.passButton}
             onPress={() => onViewPass(booking.id)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel={t('viewQRPassBtn')}
           >
+            <Text style={styles.passButtonIcon}>🎟️</Text>
             <Text style={styles.passButtonText}>{t('viewQRPassBtn')}</Text>
           </TouchableOpacity>
         )}
@@ -140,7 +155,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => onCancel(booking.id)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel={t('cancelBookingBtn')}
           >
@@ -152,7 +167,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <TouchableOpacity
             style={styles.resolveButton}
             onPress={() => onResolveConflict(booking)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel={t('findAlternativeSlot')}
           >
@@ -173,17 +188,18 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
       },
       android: {
         elevation: 2,
@@ -191,7 +207,7 @@ const styles = StyleSheet.create({
     }),
   },
   cardPending: {
-    backgroundColor: '#faf5ff',
+    backgroundColor: '#fbf8ff',
     borderColor: '#d8b4fe',
   },
   cardConflicted: {
@@ -208,37 +224,77 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   roomName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#0f172a',
   },
   location: {
     fontSize: 12,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 3,
+    fontWeight: '500',
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
     borderWidth: 1,
+  },
+  statusIcon: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   statusText: {
     fontSize: 11,
     fontWeight: '700',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#f1f5f9',
+  perforationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginVertical: 12,
+    position: 'relative',
+  },
+  perforationNotchLeft: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#f8fafc',
+    borderRightWidth: 1,
+    borderRightColor: '#e2e8f0',
+    marginLeft: -22,
+  },
+  perforationDashedLine: {
+    flex: 1,
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderStyle: 'dashed',
+    marginHorizontal: 8,
+  },
+  perforationNotchRight: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#f8fafc',
+    borderLeftWidth: 1,
+    borderLeftColor: '#e2e8f0',
+    marginRight: -22,
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 14,
   },
   metaItem: {
     gap: 2,
+  },
+  metaItemRight: {
+    alignItems: 'flex-end',
+    gap: 3,
   },
   metaLabel: {
     fontSize: 11,
@@ -247,27 +303,33 @@ const styles = StyleSheet.create({
   },
   metaValue: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1e293b',
   },
+  slotPill: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
   metaValueHighlight: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#0284c7',
   },
   conflictNotice: {
     backgroundColor: '#fef2f2',
-    padding: 10,
-    borderRadius: 8,
-    borderLeftWidth: 3,
+    padding: 12,
+    borderRadius: 10,
+    borderLeftWidth: 4,
     borderLeftColor: '#ef4444',
     marginBottom: 12,
   },
   conflictTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#991b1b',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   conflictText: {
     fontSize: 11,
@@ -278,24 +340,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   passButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: '#0284c7',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0284c7',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  passButtonIcon: {
+    fontSize: 13,
   },
   passButtonText: {
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
   cancelButton: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -307,13 +386,13 @@ const styles = StyleSheet.create({
   resolveButton: {
     backgroundColor: '#dc2626',
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
   },
   resolveButtonText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   pendingHint: {
     fontSize: 11,

@@ -341,8 +341,8 @@ export class MockBookingService implements IBookingService {
     studentId: string,
     targetDate?: string
   ): Promise<StudentQuotaUsage> {
-    const dateStr = targetDate || new Date().toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
+    const dateStr = targetDate || getTodayDateString();
+    const today = getTodayDateString();
 
     const activeUserBookings = this.bookings.filter(
       (b) => b.studentId === studentId && b.status === 'CONFIRMED'

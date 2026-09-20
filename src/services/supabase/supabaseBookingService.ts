@@ -12,6 +12,7 @@ import {
 } from '../../types/slot';
 import { StudentQuotaUsage, VKU_QUOTA_LIMITS } from '../../types/quota';
 import { supabase } from './client';
+import { getTodayDateString } from '../../utils/date';
 
 export class SupabaseBookingService implements IBookingService {
   async getAvailability(
@@ -237,7 +238,7 @@ export class SupabaseBookingService implements IBookingService {
     studentId: string,
     targetDate?: string
   ): Promise<StudentQuotaUsage> {
-    const dateStr = targetDate || new Date().toISOString().split('T')[0];
+    const dateStr = targetDate || getTodayDateString();
     const { data, error } = await supabase.rpc('get_student_quota', {
       p_student_id: studentId,
       p_booking_date: dateStr,

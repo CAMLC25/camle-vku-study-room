@@ -6,8 +6,9 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -146,7 +147,12 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {/* Filter Segment Tabs */}
-        <View style={styles.tabsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsScrollContent}
+          style={styles.tabsScrollView}
+        >
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ALL' && styles.tabActive]}
             onPress={() => setActiveTab('ALL')}
@@ -165,7 +171,7 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
             accessibilityLabel={`${t('tabActive')}, ${tabCounts.ACTIVE}`}
           >
             <Text style={[styles.tabText, activeTab === 'ACTIVE' && styles.tabTextActive]}>
-              {t('tabActive')} ({tabCounts.ACTIVE})
+              ✓ {t('tabActive')} ({tabCounts.ACTIVE})
             </Text>
           </TouchableOpacity>
 
@@ -176,7 +182,7 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
             accessibilityLabel={`${t('tabPending')}, ${tabCounts.PENDING}`}
           >
             <Text style={[styles.tabText, activeTab === 'PENDING' && styles.tabTextActive]}>
-              {t('tabPending')} ({tabCounts.PENDING})
+              ⏳ {t('tabPending')} ({tabCounts.PENDING})
             </Text>
           </TouchableOpacity>
 
@@ -193,10 +199,10 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
                 tabCounts.CONFLICTED > 0 && styles.tabTextConflict,
               ]}
             >
-              {t('tabConflicted')} ({tabCounts.CONFLICTED})
+              ⚠️ {t('tabConflicted')} ({tabCounts.CONFLICTED})
             </Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {/* List of Bookings */}
         <FlatList
@@ -262,23 +268,29 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 2,
   },
-  tabsContainer: {
-    flexDirection: 'row',
+  tabsScrollView: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    gap: 6,
+    maxHeight: 52,
+  },
+  tabsScrollContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    alignItems: 'center',
   },
   tab: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   tabActive: {
     backgroundColor: '#0284c7',
+    borderColor: '#0284c7',
   },
   tabText: {
     fontSize: 12,

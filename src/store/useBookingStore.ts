@@ -58,6 +58,8 @@ interface BookingStoreState {
   clearAllStorageAndReset: () => Promise<void>;
 }
 
+import { getTodayDateString } from '../utils/date';
+
 const memoryStorage = new Map<string, string>();
 
 const safeAsyncStorage = {
@@ -103,8 +105,6 @@ const initialFilters: RoomFilterState = {
   selectedEquipment: [],
 };
 
-const getTodayIso = () => new Date().toISOString().split('T')[0];
-
 export const useBookingStore = create<BookingStoreState>()(
   persist(
     (set, get) => ({
@@ -118,7 +118,7 @@ export const useBookingStore = create<BookingStoreState>()(
       roomsLastUpdatedAt: null,
       filters: initialFilters,
 
-      selectedDate: getTodayIso(),
+      selectedDate: getTodayDateString(),
       selectedRoomId: null,
       selectedSlotIndex: null,
 

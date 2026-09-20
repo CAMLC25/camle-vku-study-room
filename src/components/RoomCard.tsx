@@ -10,13 +10,22 @@ import { Image } from 'expo-image';
 import { Room } from '../types/room';
 import { useTranslation } from '../store/useLanguageStore';
 
-export const ROOM_CARD_HEIGHT = 136;
+export const ROOM_CARD_HEIGHT = 138;
 
 interface RoomCardProps {
   room: Room;
   onPress: (roomId: string) => void;
   isAvailableNow?: boolean;
 }
+
+const getEquipmentIcon = (eq: string): string => {
+  const lower = eq.toLowerCase();
+  if (lower.includes('projector') || lower.includes('chiếu')) return '📽️';
+  if (lower.includes('pc') || lower.includes('máy tính')) return '🖥️';
+  if (lower.includes('whiteboard') || lower.includes('bảng')) return '📋';
+  if (lower.includes('air') || lower.includes('điều hòa')) return '❄️';
+  return '⚡';
+};
 
 export const RoomCard = React.memo<RoomCardProps>(
   ({ room, onPress, isAvailableNow = true }) => {
@@ -25,18 +34,25 @@ export const RoomCard = React.memo<RoomCardProps>(
     return (
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.75}
+        activeOpacity={0.8}
         onPress={() => onPress(room.id)}
         accessibilityRole="button"
         accessibilityLabel={`${room.name}, ${t('buildingLabel')} ${room.building}, ${t('floor')} ${room.floor}, ${room.capacity} ${t('seats')}`}
       >
-        <Image
-          source={{ uri: room.photoUrl }}
-          style={styles.image}
-          contentFit="cover"
-          transition={200}
-          cachePolicy="disk"
-        />
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: room.photoUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="disk"
+          />
+          <View style={styles.capacityOverlay}>
+            <Text style={styles.capacityOverlayText}>
+              👥 {room.capacity}
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.content}>
           <View style={styles.topRow}>
@@ -69,11 +85,11 @@ export const RoomCard = React.memo<RoomCardProps>(
           <View style={styles.metaRow}>
             <View style={styles.metaPill}>
               <Text style={styles.metaPillText}>
-                {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
+                📍 {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
               </Text>
             </View>
-            <View style={styles.capacityPill}>
-              <Text style={styles.capacityPillText}>
+            <View style={styles.seatsPill}>
+              <Text style={styles.seatsPillText}>
                 {room.capacity} {t('seats')}
               </Text>
             </View>
@@ -83,7 +99,7 @@ export const RoomCard = React.memo<RoomCardProps>(
             {room.equipment.slice(0, 3).map((eq) => (
               <View key={eq} style={styles.eqTag}>
                 <Text style={styles.eqTagText} numberOfLines={1}>
-                  {eq}
+                  {getEquipmentIcon(eq)} {eq}
                 </Text>
               </View>
             ))}
@@ -114,10 +130,10 @@ RoomCard.displayName = 'RoomCard';
 
 const styles = StyleSheet.create({
   card: {
-    height: 124,
+    height: 126,
     marginBottom: 12,
     backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: 16,
     flexDirection: 'row',
     overflow: 'hidden',
     borderWidth: 1,
@@ -125,19 +141,38 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.07,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
-  image: {
-    width: 110,
+  imageContainer: {
+    width: 114,
     height: '100%',
+    position: 'relative',
     backgroundColor: '#f1f5f9',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  capacityOverlay: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  capacityOverlayText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
   },
   content: {
     flex: 1,
@@ -152,23 +187,26 @@ const styles = StyleSheet.create({
   },
   roomName: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: '#0f172a',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
-    gap: 4,
+    borderRadius: 12,
+    gap: 5,
+    borderWidth: 1,
   },
   statusAvailable: {
     backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
   },
   statusOccupied: {
     backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
   },
   statusDot: {
     width: 6,
@@ -195,31 +233,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginVertical: 2,
+    marginVertical: 1,
   },
   metaPill: {
     backgroundColor: '#f0f9ff',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e0f2fe',
   },
   metaPillText: {
     color: '#0284c7',
     fontSize: 11,
     fontWeight: '600',
   },
-  capacityPill: {
+  seatsPill: {
     backgroundColor: '#f8fafc',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  capacityPillText: {
+  seatsPillText: {
     color: '#475569',
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   equipmentRow: {
     flexDirection: 'row',
@@ -228,24 +268,25 @@ const styles = StyleSheet.create({
   },
   eqTag: {
     backgroundColor: '#f1f5f9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    maxWidth: 90,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    maxWidth: 95,
   },
   eqTagText: {
     fontSize: 10,
     color: '#475569',
+    fontWeight: '600',
   },
   eqTagMore: {
     backgroundColor: '#e2e8f0',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   eqTagMoreText: {
     fontSize: 10,
     color: '#334155',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

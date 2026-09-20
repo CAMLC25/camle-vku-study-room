@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
@@ -133,6 +134,15 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     [addBooking, updateBooking, currentStudentId, selectedDate, setQuotaUsage, refresh, navigation, t, language]
   );
 
+const getEquipmentIcon = (eq: string): string => {
+  const lower = eq.toLowerCase();
+  if (lower.includes('projector') || lower.includes('chiếu')) return '📽️';
+  if (lower.includes('pc') || lower.includes('máy tính')) return '🖥️';
+  if (lower.includes('whiteboard') || lower.includes('bảng')) return '📋';
+  if (lower.includes('air') || lower.includes('điều hòa')) return '❄️';
+  return '⚡';
+};
+
   if (!room) {
     return (
       <View style={styles.centerContainer}>
@@ -149,14 +159,25 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Room Image */}
-      <Image
-        source={{ uri: room.photoUrl }}
-        style={styles.heroImage}
-        contentFit="cover"
-        transition={250}
-        cachePolicy="disk"
-      />
+      {/* Hero Room Image with Floating Back Button */}
+      <View style={styles.heroContainer}>
+        <Image
+          source={{ uri: room.photoUrl }}
+          style={styles.heroImage}
+          contentFit="cover"
+          transition={250}
+          cachePolicy="disk"
+        />
+        <TouchableOpacity
+          style={styles.floatingBackButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('back')}
+        >
+          <Text style={styles.floatingBackText}>‹</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.content}>
         {/* Room Header Info */}
@@ -165,12 +186,12 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.roomName}>{room.name}</Text>
             <View style={styles.buildingBadge}>
               <Text style={styles.buildingBadgeText}>
-                {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
+                📍 {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
               </Text>
             </View>
           </View>
           <Text style={styles.capacityText}>
-            {t('maxCapacity')}: {room.capacity} {t('students')}
+            👥 {t('maxCapacity')}: <Text style={styles.capacityHighlight}>{room.capacity} {t('students')}</Text>
           </Text>
         </View>
 
@@ -180,7 +201,9 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.equipmentRow}>
             {room.equipment.map((eq) => (
               <View key={eq} style={styles.equipmentChip}>
-                <Text style={styles.equipmentChipText}>{eq}</Text>
+                <Text style={styles.equipmentChipText}>
+                  {getEquipmentIcon(eq)} {eq}
+                </Text>
               </View>
             ))}
           </View>
@@ -237,10 +260,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  heroContainer: {
+    width: '100%',
+    height: 230,
+    position: 'relative',
+    backgroundColor: '#cbd5e1',
+  },
   heroImage: {
     width: '100%',
-    height: 220,
-    backgroundColor: '#cbd5e1',
+    height: '100%',
+  },
+  floatingBackButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 52 : 36,
+    left: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  floatingBackText: {
+    color: '#ffffff',
+    fontSize: 26,
+    fontWeight: '300',
+    lineHeight: 28,
+    textAlign: 'center',
   },
   content: {
     padding: 16,
@@ -249,10 +296,21 @@ const styles = StyleSheet.create({
   titleSection: {
     backgroundColor: '#ffffff',
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   nameRow: {
     flexDirection: 'row',
@@ -261,7 +319,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   roomName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0f172a',
     flex: 1,
@@ -269,8 +327,10 @@ const styles = StyleSheet.create({
   buildingBadge: {
     backgroundColor: '#e0f2fe',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
   },
   buildingBadgeText: {
     color: '#0369a1',
@@ -280,6 +340,11 @@ const styles = StyleSheet.create({
   capacityText: {
     fontSize: 14,
     color: '#475569',
+    fontWeight: '500',
+  },
+  capacityHighlight: {
+    fontWeight: '700',
+    color: '#0f172a',
   },
   equipmentSection: {
     backgroundColor: '#ffffff',

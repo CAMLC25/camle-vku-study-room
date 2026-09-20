@@ -8,8 +8,8 @@ import {
   FlatList,
   Platform,
   RefreshControl,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -116,8 +116,8 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
 
   const getItemLayout = useCallback(
     (_data: ArrayLike<Room> | null | undefined, index: number) => ({
-      length: ROOM_CARD_HEIGHT,
-      offset: ROOM_CARD_HEIGHT * index,
+      length: 138,
+      offset: 138 * index,
       index,
     }),
     []
