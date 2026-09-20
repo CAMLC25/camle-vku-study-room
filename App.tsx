@@ -5,6 +5,8 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { notificationService } from './src/services/notificationService';
 import { syncService } from './src/services/syncService';
 
+import { AppDialog } from './src/components/AppDialog';
+
 export default function App() {
   useEffect(() => {
     // Initialize notification channels and set delegate for outbox sync
@@ -16,6 +18,7 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <RootNavigator />
+      <AppDialog />
     </SafeAreaProvider>
   );
 }

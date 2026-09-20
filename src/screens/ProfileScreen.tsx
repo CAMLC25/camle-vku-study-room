@@ -81,11 +81,13 @@ export const ProfileScreen: React.FC = () => {
     setIsSwitching(true);
     try {
       await switchStudent(student);
-      Alert.alert(
-        language === 'vi' ? 'Đã đổi sinh viên' : 'Student Switched',
+      showAlertDialog(
+        language === 'vi' ? 'Đã đổi tài khoản' : 'Account Switched',
         language === 'vi'
           ? `Đã đăng nhập tài khoản: ${student.name} (${student.code})`
-          : `Switched account to: ${student.name} (${student.code})`
+          : `Switched account to: ${student.name} (${student.code})`,
+        undefined,
+        'success'
       );
     } catch (e) {
       console.error('Failed to switch student', e);
