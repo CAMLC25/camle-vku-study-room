@@ -22,6 +22,8 @@ import { FilterChips } from '../components/FilterChips';
 import { EmptyState } from '../components/EmptyState';
 import { NetworkBanner } from '../components/NetworkBanner';
 import { useTranslation } from '../store/useLanguageStore';
+import { getTodayDateString, getCurrentOrNextSlotIndex } from '../utils/date';
+import { SlotIndex } from '../types/slot';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Rooms'>,
@@ -35,11 +37,14 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
   const isLoading = useBookingStore((state) => state.isRoomsLoading);
   const error = useBookingStore((state) => state.roomsError);
   const filters = useBookingStore((state) => state.filters);
+  const availabilityCache = useBookingStore((state) => state.availabilityCache);
   const fetchRooms = useBookingStore((state) => state.fetchRooms);
   const setFilters = useBookingStore((state) => state.setFilters);
   const resetFilters = useBookingStore((state) => state.resetFilters);
 
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const todayStr = useMemo(() => getTodayDateString(), []);
+  const currentSlot = useMemo(() => getCurrentOrNextSlotIndex(), []);
 
   useEffect(() => {
     fetchRooms();
@@ -100,16 +105,31 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
     });
   }, [rooms, filters]);
 
+  const isRoomAvailableNow = useCallback(
+    (roomId: string): boolean => {
+      const cacheKey = `${roomId}:${todayStr}`;
+      const dayAvail = availabilityCache[cacheKey];
+      if (dayAvail && dayAvail.slots) {
+        const slotState = dayAvail.slots[currentSlot as SlotIndex]?.state;
+        if (slotState && slotState !== 'AVAILABLE') {
+          return false;
+        }
+      }
+      return true;
+    },
+    [availabilityCache, todayStr, currentSlot]
+  );
+
   // Optimized FlatList renderItem & keyExtractor with useCallback
   const renderItem = useCallback(
     ({ item }: { item: Room }) => (
       <RoomCard
         room={item}
         onPress={handleRoomPress}
-        isAvailableNow={true}
+        isAvailableNow={isRoomAvailableNow(item.id)}
       />
     ),
-    [handleRoomPress]
+    [handleRoomPress, isRoomAvailableNow]
   );
 
   const keyExtractor = useCallback((item: Room) => item.id, []);
@@ -248,6 +268,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+    width: '100%',
+    maxWidth: 860,
+    alignSelf: 'center',
   },
   header: {
     backgroundColor: '#ffffff',
@@ -299,7 +322,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: Platform.OS === 'web' ? 96 : 32,
   },
   centerContainer: {
     flex: 1,

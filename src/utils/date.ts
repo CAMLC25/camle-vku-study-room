@@ -130,3 +130,18 @@ export function calculateNotificationTriggerDate(
 
   return triggerDate;
 }
+
+/**
+ * Returns the current or upcoming slot index based on local hour and minute
+ */
+export function getCurrentOrNextSlotIndex(now: Date = new Date()): number {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  // Slot 0: 07:30–09:30 (450 to 570)
+  if (currentMinutes < 570) return 0;
+  // Slot 1: 09:30–11:30 (570 to 690)
+  if (currentMinutes < 690) return 1;
+  // Slot 2: 13:00–15:00 (780 to 900)
+  if (currentMinutes < 900) return 2;
+  // Slot 3: 15:00–17:00 (900 to 1020)
+  return 3;
+}

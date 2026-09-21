@@ -255,6 +255,8 @@ const styles = StyleSheet.create({
   },
   heroContainer: {
     width: '100%',
+    maxWidth: 860,
+    alignSelf: 'center',
     height: 230,
     position: 'relative',
     backgroundColor: '#cbd5e1',
@@ -283,6 +285,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
+    width: '100%',
+    maxWidth: 860,
+    alignSelf: 'center',
     padding: 16,
     paddingBottom: 40,
   },
