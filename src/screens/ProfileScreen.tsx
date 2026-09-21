@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useBookingStore } from '../store/useBookingStore';
 import { useNetworkStore } from '../store/useNetworkStore';
@@ -43,6 +43,9 @@ const REGISTERED_STUDENTS = [
 ];
 
 export const ProfileScreen: React.FC = () => {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+
   const { t, language, setLanguage } = useTranslation();
   const studentId = useBookingStore((state) => state.currentStudentId);
   const studentName = useBookingStore((state) => state.currentStudentName);
@@ -76,7 +79,7 @@ export const ProfileScreen: React.FC = () => {
     refreshQuota();
   }, [studentId]);
 
-  const handleSelectStudent = async (student: typeof REGISTERED_STUDENTS[0]) => {
+  const handleSelectStudent = async (student: (typeof REGISTERED_STUDENTS)[0]) => {
     if (student.id === studentId) return;
     setIsSwitching(true);
     try {
@@ -135,364 +138,434 @@ export const ProfileScreen: React.FC = () => {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* University Top Header with Language Pill */}
+      {/* University Top Header with Centered Content */}
       <View style={styles.topHeader}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.vkuTitle}>
-            {language === 'vi' ? 'ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN' : 'VIETNAM - KOREA UNIVERSITY'}
-          </Text>
-          <Text style={styles.vkuSubtitle}>VKU Smart Study Spaces</Text>
-        </View>
-
-        {/* Compact, elegant language toggle at top-right */}
-        <View style={styles.langPillWrapper}>
-          <TouchableOpacity
-            style={[styles.langPillBtn, language === 'vi' && styles.langPillActive]}
-            onPress={() => setLanguage('vi')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.langPillText, language === 'vi' && styles.langPillTextActive]}>
-              🇻🇳 VN
+        <View style={styles.topHeaderInner}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.vkuTitle}>
+              {language === 'vi'
+                ? 'ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN'
+                : 'VIETNAM - KOREA UNIVERSITY'}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.langPillBtn, language === 'en' && styles.langPillActive]}
-            onPress={() => setLanguage('en')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.langPillText, language === 'en' && styles.langPillTextActive]}>
-              🇬🇧 EN
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Student Profile Card */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatarWrapper}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{studentName.charAt(0)}</Text>
+            <Text style={styles.vkuSubtitle}>VKU Smart Study Spaces</Text>
           </View>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: isConnected ? '#10b981' : '#f59e0b' },
-            ]}
-          />
-        </View>
 
-        <Text style={styles.studentName}>{studentName}</Text>
-        <Text style={styles.studentCode}>MSSV: {studentCode}</Text>
-
-        <View style={styles.metaRow}>
-          <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>
-              {language === 'vi' ? 'Khoa CNTT & TT' : 'Faculty of ICT'}
-            </Text>
-          </View>
-          <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>
-              {language === 'vi' ? 'Khóa 2021 – 2026' : 'Cohort 2021 – 2026'}
-            </Text>
-          </View>
-          <View style={styles.metaBadge}>
-            <Text style={styles.metaBadgeText}>21IT1</Text>
-          </View>
-        </View>
-
-        {/* System Diagnostics Bar */}
-        <View style={styles.systemStatusBar}>
-          <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>{t('systemStatusNetwork')}</Text>
-            <Text
-              style={[
-                styles.systemStatusValue,
-                { color: isConnected ? '#10b981' : '#f59e0b' },
-              ]}
+          {/* Compact language toggle */}
+          <View style={styles.langPillWrapper}>
+            <TouchableOpacity
+              style={[styles.langPillBtn, language === 'vi' && styles.langPillActive]}
+              onPress={() => setLanguage('vi')}
+              activeOpacity={0.7}
             >
-              {isConnected ? t('statusOnline') : t('statusOffline')}
-            </Text>
-          </View>
-
-          <View style={styles.systemStatusDivider} />
-
-          <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>{t('systemStatusDataMode')}</Text>
-            <Text style={styles.systemStatusValue}>ONLINE</Text>
-          </View>
-
-          <View style={styles.systemStatusDivider} />
-
-          <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>{t('systemStatusActiveSlots')}</Text>
-            <Text style={styles.systemStatusValue}>{confirmedCount}</Text>
-          </View>
-
-          <View style={styles.systemStatusDivider} />
-
-          <View style={styles.systemStatusItem}>
-            <Text style={styles.systemStatusLabel}>{t('systemStatusOutbox')}</Text>
-            <Text
-              style={[
-                styles.systemStatusValue,
-                { color: pendingSyncCount > 0 ? '#f59e0b' : '#0284c7' },
-              ]}
+              <Text style={[styles.langPillText, language === 'vi' && styles.langPillTextActive]}>
+                🇻🇳 VN
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.langPillBtn, language === 'en' && styles.langPillActive]}
+              onPress={() => setLanguage('en')}
+              activeOpacity={0.7}
             >
-              {pendingSyncCount} {t('pendingCountSuffix')}
-            </Text>
+              <Text style={[styles.langPillText, language === 'en' && styles.langPillTextActive]}>
+                🇬🇧 EN
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* Switch Student Account Section (For Testing & Quota switching) */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>👥 {t('switchStudentTitle')}</Text>
-            <Text style={styles.sectionSubtitle}>{t('switchStudentDesc')}</Text>
-          </View>
-          {isSwitching && <ActivityIndicator size="small" color="#0284c7" />}
-        </View>
-
-        <View style={styles.studentsList}>
-          {REGISTERED_STUDENTS.map((std) => {
-            const isCurrent = std.id === studentId;
-            return (
-              <TouchableOpacity
-                key={std.id}
+      {/* Main Centered Content Container */}
+      <View style={styles.mainContainer}>
+        {/* Student Profile Hero Card */}
+        <View style={styles.profileCard}>
+          <View style={isDesktop ? styles.profileHeaderDesktop : styles.profileHeaderMobile}>
+            <View style={styles.avatarWrapper}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{studentName.charAt(0)}</Text>
+              </View>
+              <View
                 style={[
-                  styles.studentItemCard,
-                  isCurrent && styles.studentItemCardActive,
+                  styles.statusDot,
+                  { backgroundColor: isConnected ? '#10b981' : '#f59e0b' },
                 ]}
-                onPress={() => handleSelectStudent(std)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.studentItemLeft}>
+              />
+            </View>
+
+            <View style={styles.profileInfoBlock}>
+              <View style={styles.nameRow}>
+                <Text style={styles.studentName}>{studentName}</Text>
+                <View
+                  style={[
+                    styles.onlineBadge,
+                    { backgroundColor: isConnected ? '#ecfdf5' : '#fffbeb' },
+                  ]}
+                >
                   <View
                     style={[
-                      styles.studentMiniAvatar,
-                      isCurrent && styles.studentMiniAvatarActive,
+                      styles.onlineBadgeDot,
+                      { backgroundColor: isConnected ? '#10b981' : '#f59e0b' },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.onlineBadgeText,
+                      { color: isConnected ? '#059669' : '#d97706' },
                     ]}
                   >
-                    <Text
+                    {isConnected ? t('statusOnline') : t('statusOffline')}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.studentCode}>MSSV: {studentCode}</Text>
+
+              <View style={styles.metaRow}>
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {language === 'vi' ? 'Khoa CNTT & TT' : 'Faculty of ICT'}
+                  </Text>
+                </View>
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {language === 'vi' ? 'Khóa 2021 – 2026' : 'Cohort 2021 – 2026'}
+                  </Text>
+                </View>
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>Lớp 21IT1</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Metrics Grid */}
+          <View style={styles.systemStatusBar}>
+            <View style={styles.systemStatusItem}>
+              <Text style={styles.systemStatusLabel}>{t('systemStatusNetwork')}</Text>
+              <Text
+                style={[
+                  styles.systemStatusValue,
+                  { color: isConnected ? '#10b981' : '#f59e0b' },
+                ]}
+              >
+                {isConnected ? 'ONLINE' : 'OFFLINE'}
+              </Text>
+            </View>
+
+            <View style={styles.systemStatusDivider} />
+
+            <View style={styles.systemStatusItem}>
+              <Text style={styles.systemStatusLabel}>{t('systemStatusDataMode')}</Text>
+              <Text style={styles.systemStatusValue}>REALTIME</Text>
+            </View>
+
+            <View style={styles.systemStatusDivider} />
+
+            <View style={styles.systemStatusItem}>
+              <Text style={styles.systemStatusLabel}>{t('systemStatusActiveSlots')}</Text>
+              <Text style={[styles.systemStatusValue, { color: '#0284c7' }]}>
+                {confirmedCount} ca
+              </Text>
+            </View>
+
+            <View style={styles.systemStatusDivider} />
+
+            <View style={styles.systemStatusItem}>
+              <Text style={styles.systemStatusLabel}>{t('systemStatusOutbox')}</Text>
+              <Text
+                style={[
+                  styles.systemStatusValue,
+                  { color: pendingSyncCount > 0 ? '#f59e0b' : '#64748b' },
+                ]}
+              >
+                {pendingSyncCount} {t('pendingCountSuffix')}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quota & Usage Section (Chỉ tiêu & Hạn mức mượn phòng) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>📊 {t('quotasTitle')}</Text>
+              <Text style={styles.sectionSubtitle}>
+                {language === 'vi'
+                  ? 'Theo dõi số ca đặt tối đa trong ngày, tuần và tương lai'
+                  : 'Track your booking limits for today, this week and future'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={refreshQuota}
+              style={styles.refreshButton}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh quota usage"
+            >
+              {isRefreshing ? (
+                <ActivityIndicator size="small" color="#0284c7" />
+              ) : (
+                <Text style={styles.refreshButtonText}>🔄 {t('refresh')}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* 3 Quota Cards: Responsive Row on Web, Stacked on Mobile */}
+          <View style={isDesktop ? styles.quotaRowDesktop : styles.quotaColumnMobile}>
+            {/* Daily Quota Card */}
+            <View style={[styles.quotaCard, isDesktop && styles.quotaCardDesktop]}>
+              <View style={styles.quotaHeader}>
+                <View style={styles.quotaHeaderTitleCol}>
+                  <Text style={styles.quotaTitle}>{t('dailyQuotaTitle')}</Text>
+                  <Text style={styles.quotaDesc}>{t('dailyQuotaDesc')}</Text>
+                </View>
+                <View style={styles.quotaBadge}>
+                  <Text
+                    style={[
+                      styles.quotaCount,
+                      quotaUsage.dailyUsage >= VKU_QUOTA_LIMITS.maxDailySlots &&
+                        styles.quotaCountFull,
+                    ]}
+                  >
+                    {quotaUsage.dailyUsage}/{VKU_QUOTA_LIMITS.maxDailySlots}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${Math.min(100, (quotaUsage.dailyUsage / VKU_QUOTA_LIMITS.maxDailySlots) * 100)}%`,
+                      backgroundColor: getProgressColor(
+                        quotaUsage.dailyUsage,
+                        VKU_QUOTA_LIMITS.maxDailySlots
+                      ),
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.quotaFooter}>
+                <Text style={styles.quotaStatusText}>
+                  {quotaUsage.dailyRemaining > 0
+                    ? `${quotaUsage.dailyRemaining} ${t('dailyRemainingText')}`
+                    : t('dailyLimitReached')}
+                </Text>
+                <Text style={styles.quotaPercent}>
+                  {Math.round((quotaUsage.dailyUsage / VKU_QUOTA_LIMITS.maxDailySlots) * 100)}%
+                </Text>
+              </View>
+            </View>
+
+            {/* Weekly Quota Card */}
+            <View style={[styles.quotaCard, isDesktop && styles.quotaCardDesktop]}>
+              <View style={styles.quotaHeader}>
+                <View style={styles.quotaHeaderTitleCol}>
+                  <Text style={styles.quotaTitle}>{t('weeklyQuotaTitle')}</Text>
+                  <Text style={styles.quotaDesc}>{t('weeklyQuotaDesc')}</Text>
+                </View>
+                <View style={styles.quotaBadge}>
+                  <Text
+                    style={[
+                      styles.quotaCount,
+                      quotaUsage.weeklyUsage >= VKU_QUOTA_LIMITS.maxWeeklySlots &&
+                        styles.quotaCountFull,
+                    ]}
+                  >
+                    {quotaUsage.weeklyUsage}/{VKU_QUOTA_LIMITS.maxWeeklySlots}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${Math.min(100, (quotaUsage.weeklyUsage / VKU_QUOTA_LIMITS.maxWeeklySlots) * 100)}%`,
+                      backgroundColor: getProgressColor(
+                        quotaUsage.weeklyUsage,
+                        VKU_QUOTA_LIMITS.maxWeeklySlots
+                      ),
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.quotaFooter}>
+                <Text style={styles.quotaStatusText}>
+                  {quotaUsage.weeklyRemaining > 0
+                    ? `${quotaUsage.weeklyRemaining} ${t('weeklyRemainingText')}`
+                    : t('weeklyLimitReached')}
+                </Text>
+                <Text style={styles.quotaPercent}>
+                  {Math.round((quotaUsage.weeklyUsage / VKU_QUOTA_LIMITS.maxWeeklySlots) * 100)}%
+                </Text>
+              </View>
+            </View>
+
+            {/* Active Future Bookings Card */}
+            <View style={[styles.quotaCard, isDesktop && styles.quotaCardDesktop]}>
+              <View style={styles.quotaHeader}>
+                <View style={styles.quotaHeaderTitleCol}>
+                  <Text style={styles.quotaTitle}>{t('futureQuotaTitle')}</Text>
+                  <Text style={styles.quotaDesc}>{t('futureQuotaDesc')}</Text>
+                </View>
+                <View style={styles.quotaBadge}>
+                  <Text
+                    style={[
+                      styles.quotaCount,
+                      quotaUsage.activeFutureCount >=
+                        VKU_QUOTA_LIMITS.maxActiveFutureBookings && styles.quotaCountFull,
+                    ]}
+                  >
+                    {quotaUsage.activeFutureCount}/{VKU_QUOTA_LIMITS.maxActiveFutureBookings}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${Math.min(
+                        100,
+                        (quotaUsage.activeFutureCount /
+                          VKU_QUOTA_LIMITS.maxActiveFutureBookings) *
+                          100
+                      )}%`,
+                      backgroundColor: getProgressColor(
+                        quotaUsage.activeFutureCount,
+                        VKU_QUOTA_LIMITS.maxActiveFutureBookings
+                      ),
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.quotaFooter}>
+                <Text style={styles.quotaStatusText}>
+                  {quotaUsage.activeFutureRemaining > 0
+                    ? `${quotaUsage.activeFutureRemaining} ${t('futureRemainingText')}`
+                    : t('futureLimitReached')}
+                </Text>
+                <Text style={styles.quotaPercent}>
+                  {Math.round(
+                    (quotaUsage.activeFutureCount /
+                      VKU_QUOTA_LIMITS.maxActiveFutureBookings) *
+                      100
+                  )}%
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Switch Student Account Section (Tài khoản thử nghiệm) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>👥 {t('switchStudentTitle')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('switchStudentDesc')}</Text>
+            </View>
+            {isSwitching && <ActivityIndicator size="small" color="#0284c7" />}
+          </View>
+
+          {/* 3 Student Cards in Desktop Row / Mobile Column */}
+          <View style={isDesktop ? styles.studentsRowDesktop : styles.studentsListMobile}>
+            {REGISTERED_STUDENTS.map((std) => {
+              const isCurrent = std.id === studentId;
+              return (
+                <TouchableOpacity
+                  key={std.id}
+                  style={[
+                    styles.studentItemCard,
+                    isDesktop && styles.studentItemCardDesktop,
+                    isCurrent && styles.studentItemCardActive,
+                  ]}
+                  onPress={() => handleSelectStudent(std)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.studentItemLeft}>
+                    <View
                       style={[
-                        styles.studentMiniAvatarText,
-                        isCurrent && styles.studentMiniAvatarTextActive,
+                        styles.studentMiniAvatar,
+                        isCurrent && styles.studentMiniAvatarActive,
                       ]}
                     >
-                      {std.avatarChar}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.studentMiniAvatarText,
+                          isCurrent && styles.studentMiniAvatarTextActive,
+                        ]}
+                      >
+                        {std.avatarChar}
+                      </Text>
+                    </View>
+                    <View style={styles.studentItemDetails}>
+                      <Text style={styles.studentItemName}>{std.name}</Text>
+                      <Text style={styles.studentItemCode}>
+                        MSSV: {std.code} • {std.class}
+                      </Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.studentItemName}>{std.name}</Text>
-                    <Text style={styles.studentItemCode}>
-                      MSSV: {std.code} • {std.class}
-                    </Text>
-                  </View>
-                </View>
 
-                {isCurrent ? (
-                  <View style={styles.activeStudentBadge}>
-                    <Text style={styles.activeStudentBadgeText}>
-                      ✓ {t('activeStudentBadge')}
-                    </Text>
-                  </View>
+                  {isCurrent ? (
+                    <View style={styles.activeStudentBadge}>
+                      <Text style={styles.activeStudentBadgeText}>
+                        ✓ {t('activeStudentBadge')}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.switchButtonPill}>
+                      <Text style={styles.switchButtonPillText}>
+                        {language === 'vi' ? 'Chọn' : 'Select'}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Account Utilities & Reset Section */}
+        <View style={styles.section}>
+          <View style={styles.utilitiesCard}>
+            {pendingSyncCount > 0 && (
+              <TouchableOpacity
+                style={styles.syncButton}
+                onPress={handleManualSync}
+                disabled={isSyncing}
+                activeOpacity={0.8}
+              >
+                {isSyncing ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <View style={styles.switchButtonPill}>
-                    <Text style={styles.switchButtonPillText}>
-                      {language === 'vi' ? 'Chọn' : 'Select'}
-                    </Text>
-                  </View>
+                  <Text style={styles.syncButtonText}>
+                    ⚡ {t('syncOutboxBtn')} ({pendingSyncCount})
+                  </Text>
                 )}
               </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Quota & Usage Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>📊 {t('quotasTitle')}</Text>
-          <TouchableOpacity
-            onPress={refreshQuota}
-            style={styles.refreshButton}
-            accessibilityRole="button"
-            accessibilityLabel="Refresh quota usage"
-          >
-            {isRefreshing ? (
-              <ActivityIndicator size="small" color="#0284c7" />
-            ) : (
-              <Text style={styles.refreshButtonText}>🔄 {t('refresh')}</Text>
             )}
-          </TouchableOpacity>
-        </View>
 
-        {/* Daily Quota Card */}
-        <View style={styles.quotaCard}>
-          <View style={styles.quotaHeader}>
-            <View>
-              <Text style={styles.quotaTitle}>{t('dailyQuotaTitle')}</Text>
-              <Text style={styles.quotaDesc}>{t('dailyQuotaDesc')}</Text>
-            </View>
-            <Text
-              style={[
-                styles.quotaCount,
-                quotaUsage.dailyUsage >= VKU_QUOTA_LIMITS.maxDailySlots && styles.quotaCountFull,
-              ]}
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleResetData}
+              activeOpacity={0.7}
             >
-              {quotaUsage.dailyUsage} / {VKU_QUOTA_LIMITS.maxDailySlots}
-            </Text>
-          </View>
-
-          <View style={styles.progressBarTrack}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${Math.min(100, (quotaUsage.dailyUsage / VKU_QUOTA_LIMITS.maxDailySlots) * 100)}%`,
-                  backgroundColor: getProgressColor(
-                    quotaUsage.dailyUsage,
-                    VKU_QUOTA_LIMITS.maxDailySlots
-                  ),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={styles.quotaFooter}>
-            <Text style={styles.quotaStatusText}>
-              {quotaUsage.dailyRemaining > 0
-                ? `${quotaUsage.dailyRemaining} ${t('dailyRemainingText')}`
-                : t('dailyLimitReached')}
-            </Text>
-            <Text style={styles.quotaPercent}>
-              {Math.round((quotaUsage.dailyUsage / VKU_QUOTA_LIMITS.maxDailySlots) * 100)}%
+              <Text style={styles.resetButtonText}>🗑️ {t('clearCacheBtn')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.resetHintText}>
+              {language === 'vi'
+                ? 'Xóa toàn bộ bộ nhớ tạm offline và làm mới lại hạn mức từ máy chủ VKU'
+                : 'Clear local offline cache and re-sync quota from VKU server'}
             </Text>
           </View>
         </View>
-
-        {/* Weekly Quota Card */}
-        <View style={styles.quotaCard}>
-          <View style={styles.quotaHeader}>
-            <View>
-              <Text style={styles.quotaTitle}>{t('weeklyQuotaTitle')}</Text>
-              <Text style={styles.quotaDesc}>{t('weeklyQuotaDesc')}</Text>
-            </View>
-            <Text
-              style={[
-                styles.quotaCount,
-                quotaUsage.weeklyUsage >= VKU_QUOTA_LIMITS.maxWeeklySlots && styles.quotaCountFull,
-              ]}
-            >
-              {quotaUsage.weeklyUsage} / {VKU_QUOTA_LIMITS.maxWeeklySlots}
-            </Text>
-          </View>
-
-          <View style={styles.progressBarTrack}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${Math.min(100, (quotaUsage.weeklyUsage / VKU_QUOTA_LIMITS.maxWeeklySlots) * 100)}%`,
-                  backgroundColor: getProgressColor(
-                    quotaUsage.weeklyUsage,
-                    VKU_QUOTA_LIMITS.maxWeeklySlots
-                  ),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={styles.quotaFooter}>
-            <Text style={styles.quotaStatusText}>
-              {quotaUsage.weeklyRemaining > 0
-                ? `${quotaUsage.weeklyRemaining} ${t('weeklyRemainingText')}`
-                : t('weeklyLimitReached')}
-            </Text>
-            <Text style={styles.quotaPercent}>
-              {Math.round((quotaUsage.weeklyUsage / VKU_QUOTA_LIMITS.maxWeeklySlots) * 100)}%
-            </Text>
-          </View>
-        </View>
-
-        {/* Active Future Bookings Card */}
-        <View style={styles.quotaCard}>
-          <View style={styles.quotaHeader}>
-            <View>
-              <Text style={styles.quotaTitle}>{t('futureQuotaTitle')}</Text>
-              <Text style={styles.quotaDesc}>{t('futureQuotaDesc')}</Text>
-            </View>
-            <Text
-              style={[
-                styles.quotaCount,
-                quotaUsage.activeFutureCount >= VKU_QUOTA_LIMITS.maxActiveFutureBookings &&
-                  styles.quotaCountFull,
-              ]}
-            >
-              {quotaUsage.activeFutureCount} / {VKU_QUOTA_LIMITS.maxActiveFutureBookings}
-            </Text>
-          </View>
-
-          <View style={styles.progressBarTrack}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${Math.min(
-                    100,
-                    (quotaUsage.activeFutureCount / VKU_QUOTA_LIMITS.maxActiveFutureBookings) * 100
-                  )}%`,
-                  backgroundColor: getProgressColor(
-                    quotaUsage.activeFutureCount,
-                    VKU_QUOTA_LIMITS.maxActiveFutureBookings
-                  ),
-                },
-              ]}
-            />
-          </View>
-
-          <View style={styles.quotaFooter}>
-            <Text style={styles.quotaStatusText}>
-              {quotaUsage.activeFutureRemaining > 0
-                ? `${quotaUsage.activeFutureRemaining} ${t('futureRemainingText')}`
-                : t('futureLimitReached')}
-            </Text>
-            <Text style={styles.quotaPercent}>
-              {Math.round(
-                (quotaUsage.activeFutureCount / VKU_QUOTA_LIMITS.maxActiveFutureBookings) * 100
-              )}%
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Account Settings & Outbox Section */}
-      <View style={styles.section}>
-        {pendingSyncCount > 0 && (
-          <TouchableOpacity
-            style={styles.syncButton}
-            onPress={handleManualSync}
-            disabled={isSyncing}
-            activeOpacity={0.8}
-          >
-            {isSyncing ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Text style={styles.syncButtonText}>
-                {t('syncOutboxBtn')} ({pendingSyncCount})
-              </Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={handleResetData}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.resetButtonText}>🗑️ {t('clearCacheBtn')}</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -504,12 +577,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 48,
   },
   topHeader: {
     backgroundColor: '#0c4a6e',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  topHeaderInner: {
+    maxWidth: 1040,
+    width: '100%',
+    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -518,7 +597,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   vkuTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#e0f2fe',
     letterSpacing: 0.5,
@@ -526,19 +605,19 @@ const styles = StyleSheet.create({
   vkuSubtitle: {
     fontSize: 11,
     color: '#94a3b8',
-    marginTop: 1,
+    marginTop: 2,
     fontWeight: '500',
   },
   langPillWrapper: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
-    padding: 2,
-    gap: 2,
+    padding: 3,
+    gap: 3,
   },
   langPillBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 16,
   },
   langPillActive: {
@@ -552,13 +631,17 @@ const styles = StyleSheet.create({
   langPillTextActive: {
     color: '#0c4a6e',
   },
+  mainContainer: {
+    maxWidth: 1040,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    marginTop: 18,
+  },
   profileCard: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginTop: 14,
     borderRadius: 18,
-    padding: 18,
-    alignItems: 'center',
+    padding: 20,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     ...Platform.select({
@@ -571,54 +654,94 @@ const styles = StyleSheet.create({
       android: {
         elevation: 2,
       },
+      web: {
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+      } as any,
     }),
+  },
+  profileHeaderDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  profileHeaderMobile: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: 12,
   },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: 10,
   },
   avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#0284c7',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     color: '#ffffff',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
   },
   statusDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2.5,
     borderColor: '#ffffff',
     position: 'absolute',
     bottom: 2,
     right: 2,
   },
+  profileInfoBlock: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
   studentName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0f172a',
+  },
+  onlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  onlineBadgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  onlineBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   studentCode: {
     fontSize: 13,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 4,
     fontWeight: '600',
   },
   metaRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
-    marginTop: 10,
+    marginTop: 8,
   },
   metaBadge: {
     backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 6,
   },
@@ -629,8 +752,8 @@ const styles = StyleSheet.create({
   },
   systemStatusBar: {
     flexDirection: 'row',
-    marginTop: 16,
-    paddingTop: 14,
+    marginTop: 20,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     width: '100%',
@@ -639,46 +762,47 @@ const styles = StyleSheet.create({
   },
   systemStatusItem: {
     alignItems: 'center',
+    flex: 1,
   },
   systemStatusLabel: {
     fontSize: 11,
     color: '#64748b',
+    fontWeight: '500',
   },
   systemStatusValue: {
     fontSize: 13,
     fontWeight: '800',
     color: '#0f172a',
-    marginTop: 2,
+    marginTop: 3,
   },
   systemStatusDivider: {
     width: 1,
-    height: 22,
+    height: 24,
     backgroundColor: '#e2e8f0',
   },
   section: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    marginTop: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
     color: '#0f172a',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   sectionSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748b',
     marginTop: 2,
   },
   refreshButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#e0f2fe',
   },
@@ -687,18 +811,134 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0284c7',
   },
-  studentsList: {
-    gap: 8,
+  quotaRowDesktop: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  studentItemCard: {
+  quotaColumnMobile: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  quotaCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+      } as any,
+    }),
+  },
+  quotaCardDesktop: {
+    flex: 1,
+  },
+  quotaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  quotaHeaderTitleCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  quotaTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  quotaDesc: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  quotaBadge: {
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  quotaCount: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  quotaCountFull: {
+    color: '#ef4444',
+  },
+  progressBarTrack: {
+    height: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  quotaFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
+    marginTop: 10,
+  },
+  quotaStatusText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  quotaPercent: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  studentsRowDesktop: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  studentsListMobile: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  studentItemCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
+    justifyContent: 'space-between',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+      } as any,
+    }),
+  },
+  studentItemCardDesktop: {
+    flex: 1,
+    minHeight: 110,
   },
   studentItemCardActive: {
     borderColor: '#0284c7',
@@ -707,13 +947,13 @@ const styles = StyleSheet.create({
   studentItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   studentMiniAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f1f5f9',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -721,12 +961,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#0284c7',
   },
   studentMiniAvatarText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#475569',
   },
   studentMiniAvatarTextActive: {
     color: '#ffffff',
+  },
+  studentItemDetails: {
+    flex: 1,
   },
   studentItemName: {
     fontSize: 14,
@@ -736,9 +979,11 @@ const styles = StyleSheet.create({
   studentItemCode: {
     fontSize: 11,
     color: '#64748b',
-    marginTop: 1,
+    marginTop: 2,
   },
   activeStudentBadge: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
     backgroundColor: '#dcfce7',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -752,79 +997,37 @@ const styles = StyleSheet.create({
     color: '#15803d',
   },
   switchButtonPill: {
-    backgroundColor: '#f1f5f9',
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
   },
   switchButtonPillText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#334155',
+    fontWeight: '700',
+    color: '#0284c7',
   },
-  quotaCard: {
+  utilitiesCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-  },
-  quotaHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  quotaTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  quotaDesc: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 1,
-  },
-  quotaCount: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  quotaCountFull: {
-    color: '#ef4444',
-  },
-  progressBarTrack: {
-    height: 6,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  quotaFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 6,
-  },
-  quotaStatusText: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  quotaPercent: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#0f172a',
   },
   syncButton: {
     backgroundColor: '#0284c7',
     paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 8,
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: 10,
   },
   syncButtonText: {
     color: '#ffffff',
@@ -832,16 +1035,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   resetButton: {
-    backgroundColor: '#ffffff',
-    paddingVertical: 11,
-    borderRadius: 12,
+    backgroundColor: '#fff1f2',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#fca5a5',
+    borderColor: '#fecdd3',
   },
   resetButtonText: {
-    color: '#dc2626',
+    color: '#e11d48',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  resetHintText: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
