@@ -158,7 +158,7 @@ export const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text style={[styles.langPillText, language === 'vi' && styles.langPillTextActive]}>
-                🇻🇳 VN
+                VN
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -167,7 +167,7 @@ export const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text style={[styles.langPillText, language === 'en' && styles.langPillTextActive]}>
-                🇬🇧 EN
+                EN
               </Text>
             </TouchableOpacity>
           </View>
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   scrollContent: {
-    paddingBottom: 48,
+    paddingBottom: 110,
   },
   topHeader: {
     backgroundColor: '#0c4a6e',

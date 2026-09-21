@@ -302,6 +302,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: Platform.OS === 'web' ? 96 : 32,
+    paddingBottom: 110,
   },
 });

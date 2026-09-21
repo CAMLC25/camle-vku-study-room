@@ -40,7 +40,7 @@ export const MainTabs: React.FC = () => {
         borderRadius: 24,
         borderWidth: 1,
         borderColor: '#e2e8f0',
-        height: 64,
+        height: 70,
         paddingBottom: 8,
         paddingTop: 8,
         elevation: 8,
@@ -57,10 +57,10 @@ export const MainTabs: React.FC = () => {
       backgroundColor: '#ffffff',
       borderTopColor: '#e2e8f0',
       borderTopWidth: 1,
-      height: Platform.OS === 'ios' ? 84 : 64,
-      paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+      height: Platform.OS === 'ios' ? 88 : 74,
+      paddingBottom: Platform.OS === 'ios' ? 24 : 12,
       paddingTop: 8,
-      elevation: 6,
+      elevation: 8,
     };
   }, [isDesktopWeb, width]);
 
@@ -71,10 +71,16 @@ export const MainTabs: React.FC = () => {
         tabBarActiveTintColor: '#0284c7',
         tabBarInactiveTintColor: '#64748b',
         tabBarStyle,
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 2,
+        },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '700',
           marginTop: 2,
+          paddingBottom: 2,
         },
         tabBarBadgeStyle: {
           backgroundColor: '#0284c7',
@@ -87,6 +93,7 @@ export const MainTabs: React.FC = () => {
           lineHeight: 18,
           textAlign: 'center',
           alignSelf: 'center',
+          top: -3,
         },
       }}
     >
