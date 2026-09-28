@@ -8,8 +8,11 @@ import {
   Alert,
   ScrollView,
   Platform,
+  RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeScreen } from '../components/layout/SafeScreen';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -25,8 +28,8 @@ import { bookingService } from '../services/bookingService';
 import { outboxService } from '../services/outboxService';
 import { notificationService } from '../services/notificationService';
 import { useTranslation } from '../store/useLanguageStore';
-
 import { showConfirmDialog, showAlertDialog } from '../utils/dialog';
+import { colors, layout, spacing, typography, shadows } from '../theme/theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'MyBookings'>,
@@ -37,15 +40,39 @@ type FilterTab = 'ALL' | 'ACTIVE' | 'PENDING' | 'CONFLICTED' | 'CANCELLED';
 
 export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [passBooking, setPassBooking] = useState<Booking | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const myBookings = useBookingStore((state) => state.myBookings);
   const currentStudentId = useBookingStore((state) => state.currentStudentId);
   const updateBooking = useBookingStore((state) => state.updateBooking);
+  const setMyBookings = useBookingStore((state) => state.setMyBookings);
   const { isConnected, isSimulatedOffline } = useNetworkStatus();
 
   const isOffline = !isConnected || isSimulatedOffline;
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      if (!isOffline) {
+        const fresh = await bookingService.getMyBookings(currentStudentId);
+        const pendingSyncs = myBookings.filter((b) => b.status === 'PENDING_SYNC');
+        const merged = [
+          ...pendingSyncs,
+          ...fresh.filter((fb) => !pendingSyncs.some((pb) => pb.id === fb.id)),
+        ];
+        setMyBookings(merged);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh bookings:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isOffline, currentStudentId, myBookings, setMyBookings]);
 
   // Tabs with counts
   const tabCounts = useMemo(() => {
@@ -127,14 +154,16 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeScreen edges={['top', 'left', 'right']} backgroundColor={colors.surface}>
       <View style={styles.container}>
         {/* Offline & Sync Status Banner */}
         <NetworkBanner />
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{t('myBookingsTitle')}</Text>
+          <Text style={styles.title} accessibilityRole="header">
+            {t('myBookingsTitle')}
+          </Text>
           <Text style={styles.subtitle}>
             {t('myBookingsSubtitle')}
           </Text>
@@ -144,13 +173,16 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.tabsScrollContent}
           style={styles.tabsScrollView}
         >
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ALL' && styles.tabActive]}
             onPress={() => setActiveTab('ALL')}
+            activeOpacity={0.7}
             accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'ALL' }}
             accessibilityLabel={`${t('tabAll')}, ${tabCounts.ALL}`}
           >
             <Text style={[styles.tabText, activeTab === 'ALL' && styles.tabTextActive]}>
@@ -161,7 +193,9 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ACTIVE' && styles.tabActive]}
             onPress={() => setActiveTab('ACTIVE')}
+            activeOpacity={0.7}
             accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'ACTIVE' }}
             accessibilityLabel={`${t('tabActive')}, ${tabCounts.ACTIVE}`}
           >
             <Text style={[styles.tabText, activeTab === 'ACTIVE' && styles.tabTextActive]}>
@@ -172,7 +206,9 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.tab, activeTab === 'PENDING' && styles.tabActive]}
             onPress={() => setActiveTab('PENDING')}
+            activeOpacity={0.7}
             accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'PENDING' }}
             accessibilityLabel={`${t('tabPending')}, ${tabCounts.PENDING}`}
           >
             <Text style={[styles.tabText, activeTab === 'PENDING' && styles.tabTextActive]}>
@@ -183,7 +219,9 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.tab, activeTab === 'CONFLICTED' && styles.tabActive]}
             onPress={() => setActiveTab('CONFLICTED')}
+            activeOpacity={0.7}
             accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'CONFLICTED' }}
             accessibilityLabel={`${t('tabConflicted')}, ${tabCounts.CONFLICTED}`}
           >
             <Text
@@ -200,9 +238,26 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* List of Bookings */}
         <FlatList
+          key={isDesktop ? 'desktop-bookings-2' : 'mobile-bookings-1'}
           data={filteredBookings}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          numColumns={isDesktop ? 2 : 1}
+          columnWrapperStyle={isDesktop ? styles.columnWrapper : undefined}
+          contentContainerStyle={[
+            styles.listContent,
+            isDesktop && styles.listContentDesktop,
+            { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           renderItem={({ item }) => (
             <BookingCard
               booking={item}
@@ -233,75 +288,83 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
           onClose={() => setPassBooking(null)}
         />
       </View>
-    </SafeAreaView>
+    </SafeScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
     width: '100%',
-    maxWidth: 860,
+    maxWidth: 1140,
     alignSelf: 'center',
   },
+  columnWrapper: {
+    gap: 16,
+    justifyContent: 'space-between',
+  },
+  listContentDesktop: {
+    paddingTop: spacing.base,
+    paddingBottom: 40,
+  },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.surface,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.textPrimary,
   },
   subtitle: {
-    fontSize: 13,
-    color: '#64748b',
+    fontSize: typography.sizes.xs,
+    color: colors.textMuted,
     marginTop: 2,
+    fontWeight: typography.weights.medium,
   },
   tabsScrollView: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    maxHeight: 52,
+    borderBottomColor: colors.border,
+    maxHeight: 56,
   },
   tabsScrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.xs + 2,
+    gap: spacing.xs,
     alignItems: 'center',
   },
   tab: {
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    minHeight: 38,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: layout.radii.sm,
+    backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabActive: {
-    backgroundColor: '#0284c7',
-    borderColor: '#0284c7',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   tabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.textSecondary,
   },
   tabTextActive: {
-    color: '#ffffff',
+    color: colors.textInverse,
   },
   tabTextConflict: {
-    color: '#ef4444',
+    color: colors.conflicted,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 110,
+    padding: spacing.base,
+    paddingBottom: 80,
   },
 });

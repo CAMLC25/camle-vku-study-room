@@ -155,6 +155,124 @@ export class NotificationService {
       console.warn('Failed to dispatch conflict notification', e);
     }
   }
+
+  /**
+   * Play a clean, subtle audio chime when notification arrives (Web Audio API)
+   */
+  playNotificationChime(): void {
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioCtx =
+          (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880, now + 0.12); // A5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch {
+        // Ignored if sound is restricted by browser policy
+      }
+    }
+  }
+
+  /**
+   * Immediately triggers a sample check-in notification alert (both native & web banner)
+   */
+  async triggerSampleAlert(sample = {
+    roomName: 'A101 - Smart Seminar',
+    slotLabel: 'Ca 1: 07:30 – 09:30',
+  }): Promise<void> {
+    this.playNotificationChime();
+
+    // Browser Notification API if on web and permitted
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        try {
+          new Notification('🔔 Nhắc nhở nhận phòng (Study Room Check-in)', {
+            body: `Ca mượn phòng ${sample.roomName} (${sample.slotLabel}) sẽ bắt đầu sau 15 phút! Vui lòng chuẩn bị check-in.`,
+          });
+        } catch (e) {
+          console.log('Web notification trigger error:', e);
+        }
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((perm) => {
+          if (perm === 'granted') {
+            new Notification('🔔 Nhắc nhở nhận phòng (Study Room Check-in)', {
+              body: `Ca mượn phòng ${sample.roomName} (${sample.slotLabel}) sẽ bắt đầu sau 15 phút! Vui lòng chuẩn bị check-in.`,
+            });
+          }
+        });
+      }
+    }
+
+    // Native expo-notifications if on Android / iOS
+    if (Platform.OS !== 'web') {
+      const hasPermission = await this.requestPermissions();
+      if (hasPermission) {
+        await this.init();
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🔔 Nhắc nhở nhận phòng (Study Room Check-in)',
+              body: `Ca mượn phòng ${sample.roomName} (${sample.slotLabel}) sẽ bắt đầu sau 15 phút! Vui lòng chuẩn bị check-in.`,
+              data: { isTest: true, roomName: sample.roomName },
+              sound: 'default',
+            },
+            trigger: null, // immediately
+          });
+        } catch (err) {
+          console.warn('Native notification alert failed:', err);
+        }
+      }
+    }
+  }
+
+  /**
+   * Schedules a test notification after specified seconds for demonstration/testing
+   */
+  async scheduleTestNotification(
+    seconds: number = 5,
+    sample = {
+      roomName: 'A101 - Smart Seminar',
+      slotLabel: 'Ca 1: 07:30 – 09:30',
+    }
+  ): Promise<string | null> {
+    if (Platform.OS !== 'web') {
+      const hasPermission = await this.requestPermissions();
+      if (hasPermission) {
+        await this.init();
+        try {
+          const notificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🔔 Nhắc nhở nhận phòng (Study Room Check-in)',
+              body: `Ca mượn phòng ${sample.roomName} (${sample.slotLabel}) sẽ bắt đầu sau 15 phút! Vui lòng chuẩn bị check-in.`,
+              data: { isTest: true, roomName: sample.roomName },
+              sound: 'default',
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+              seconds: Math.max(1, Math.round(seconds)),
+              channelId: 'vku-study-room-reminders',
+            },
+          });
+          return notificationId;
+        } catch (e) {
+          console.warn('[NotificationService] Native test notification failed:', e);
+        }
+      }
+    }
+    return null;
+  }
 }
 
 export const notificationService = new NotificationService();
+

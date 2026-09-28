@@ -8,7 +8,10 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
-  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  Splash: undefined;
+  Login: undefined;
+  Register: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   RoomDetail: { roomId: string };
   ConfirmBooking: {
     roomId: string;

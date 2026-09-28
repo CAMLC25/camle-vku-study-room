@@ -10,6 +10,8 @@ import { Image } from 'expo-image';
 import { Room } from '../types/room';
 import { useTranslation } from '../store/useLanguageStore';
 
+import { colors, layout, spacing, typography, shadows } from '../theme/theme';
+
 export const ROOM_CARD_HEIGHT = 138;
 
 interface RoomCardProps {
@@ -34,10 +36,11 @@ export const RoomCard = React.memo<RoomCardProps>(
     return (
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.8}
+        activeOpacity={0.75}
         onPress={() => onPress(room.id)}
         accessibilityRole="button"
         accessibilityLabel={`${room.name}, ${t('buildingLabel')} ${room.building}, ${t('floor')} ${room.floor}, ${room.capacity} ${t('seats')}`}
+        accessibilityHint="Opens room detail and available time slots"
       >
         <View style={styles.imageContainer}>
           <Image
@@ -130,25 +133,16 @@ RoomCard.displayName = 'RoomCard';
 
 const styles = StyleSheet.create({
   card: {
-    height: 126,
-    marginBottom: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    flex: 1,
+    height: 130,
+    marginBottom: 16,
+    backgroundColor: colors.surface,
+    borderRadius: layout.radii.lg,
     flexDirection: 'row',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.07,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderColor: colors.border,
+    ...shadows.card,
   },
   imageContainer: {
     width: 114,

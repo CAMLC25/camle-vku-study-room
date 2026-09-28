@@ -33,10 +33,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "npm run test:concurrency && npm run test:outbox && npm run test:notifications",
+    "build:web": "expo export -p web",
+    "test": "npm run test:concurrency && npm run test:outbox && npm run test:notifications && npm run test:auth",
     "test:concurrency": "tsx -r ./test/setup.ts test/concurrency-test.ts",
     "test:outbox": "tsx -r ./test/setup.ts test/offline-outbox-conflict.test.ts",
-    "test:notifications": "tsx -r ./test/setup.ts test/notifications-qr.test.ts"
+    "test:notifications": "tsx -r ./test/setup.ts test/notifications-qr.test.ts",
+    "test:auth": "tsx -r ./test/setup.ts test/auth-service.test.ts"
   },
   "private": true
 }

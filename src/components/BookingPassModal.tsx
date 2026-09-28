@@ -292,6 +292,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: 'center',
     borderRadius: 10,
     alignItems: 'center',
   },

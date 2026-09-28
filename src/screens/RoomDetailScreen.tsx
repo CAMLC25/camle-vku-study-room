@@ -8,8 +8,11 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { RootStackParamList } from '../navigation/types';
 import { useBookingStore } from '../store/useBookingStore';
@@ -24,12 +27,16 @@ import { formatDisplayDate } from '../utils/date';
 import { bookingService } from '../services/bookingService';
 import { notificationService } from '../services/notificationService';
 import { showConfirmDialog, showAlertDialog } from '../utils/dialog';
+import { colors, layout, spacing, typography, shadows } from '../theme/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoomDetail'>;
 
 export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { roomId } = route.params;
   const { t, language } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const insets = useSafeAreaInsets();
 
   // Narrow Zustand selectors
   const room = useBookingStore((state) =>
@@ -149,82 +156,134 @@ const getEquipmentIcon = (eq: string): string => {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Room Image with Floating Back Button */}
-      <View style={styles.heroContainer}>
-        <Image
-          source={{ uri: room.photoUrl }}
-          style={styles.heroImage}
-          contentFit="cover"
-          transition={250}
-          cachePolicy="disk"
-        />
-        <TouchableOpacity
-          style={styles.floatingBackButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={t('back')}
-        >
-          <Text style={styles.floatingBackText}>‹</Text>
-        </TouchableOpacity>
-      </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 32 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <StatusBar style="light" />
 
-      <View style={styles.content}>
-        {/* Room Header Info */}
-        <View style={styles.titleSection}>
-          <View style={styles.nameRow}>
-            <Text style={styles.roomName}>{room.name}</Text>
-            <View style={styles.buildingBadge}>
-              <Text style={styles.buildingBadgeText}>
-                📍 {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.capacityText}>
-            👥 {t('maxCapacity')}: <Text style={styles.capacityHighlight}>{room.capacity} {t('students')}</Text>
-          </Text>
+      {/* Desktop Top Breadcrumb & Back Navigation */}
+      {isDesktop && (
+        <View style={styles.desktopBreadcrumbRow}>
+          <TouchableOpacity
+            style={styles.desktopBackBtn}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.desktopBackBtnText}>
+              ← {t('back')} ({language === 'vi' ? 'Danh sách phòng' : 'Rooms'})
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.desktopBreadcrumbCurrent}>/ {room.name}</Text>
         </View>
+      )}
 
-        {/* Equipment Chips */}
-        <View style={styles.equipmentSection}>
-          <Text style={styles.sectionLabel}>{t('equipmentTitle')}:</Text>
-          <View style={styles.equipmentRow}>
-            {room.equipment.map((eq) => (
-              <View key={eq} style={styles.equipmentChip}>
-                <Text style={styles.equipmentChipText}>
-                  {getEquipmentIcon(eq)} {eq}
+      {/* Mobile Only: Hero Room Image with Floating Back Button */}
+      {!isDesktop && (
+        <View style={styles.heroContainer}>
+          <Image
+            source={{ uri: room.photoUrl }}
+            style={styles.heroImage}
+            contentFit="cover"
+            transition={250}
+            cachePolicy="disk"
+          />
+          <TouchableOpacity
+            style={[
+              styles.floatingBackButton,
+              { top: insets.top > 0 ? insets.top + 8 : 16 },
+            ]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('back')}
+            accessibilityHint="Navigates back to room list"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.floatingBackText}>‹</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Main Layout Container (Desktop 2-column or Mobile 1-column) */}
+      <View style={[styles.mainLayout, isDesktop && styles.mainLayoutDesktop]}>
+        {/* Left Column on Desktop / Top on Mobile */}
+        <View style={[styles.leftCol, isDesktop && styles.leftColDesktop]}>
+          {/* Desktop Only: Contained Hero Image with Rounded Corners */}
+          {isDesktop && (
+            <View style={styles.heroContainerDesktop}>
+              <Image
+                source={{ uri: room.photoUrl }}
+                style={styles.heroImage}
+                contentFit="cover"
+                transition={250}
+                cachePolicy="disk"
+              />
+            </View>
+          )}
+
+          {/* Room Header Info */}
+          <View style={styles.titleSection}>
+            <View style={styles.nameRow}>
+              <Text style={styles.roomName}>{room.name}</Text>
+              <View style={styles.buildingBadge}>
+                <Text style={styles.buildingBadgeText}>
+                  📍 {t('buildingLabel')} {room.building} • {t('floor')} {room.floor}
                 </Text>
               </View>
-            ))}
+            </View>
+            <Text style={styles.capacityText}>
+              👥 {t('maxCapacity')}:{' '}
+              <Text style={styles.capacityHighlight}>
+                {room.capacity} {t('students')}
+              </Text>
+            </Text>
+          </View>
+
+          {/* Equipment Chips */}
+          <View style={styles.equipmentSection}>
+            <Text style={styles.sectionLabel}>{t('equipmentTitle')}:</Text>
+            <View style={styles.equipmentRow}>
+              {room.equipment.map((eq) => (
+                <View key={eq} style={styles.equipmentChip}>
+                  <Text style={styles.equipmentChipText}>
+                    {getEquipmentIcon(eq)} {eq}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
 
-        {/* 7-Day Horizon Date Selector */}
-        <DateSelector
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
-
-        {/* Realtime Availability Grid */}
-        <View style={styles.slotSection}>
-          <View style={styles.slotHeaderRow}>
-            <Text style={styles.dateLabel}>
-              {formatDisplayDate(selectedDate)}
-            </Text>
-            {isLoading && (
-              <View style={styles.syncRow}>
-                <ActivityIndicator size="small" color="#0284c7" />
-                <Text style={styles.syncText}>{t('syncingRealtime')}</Text>
-              </View>
-            )}
-          </View>
-
-          <SlotGrid
-            slots={slots}
-            onSelectSlot={handleSelectSlot}
-            onRefresh={refresh}
+        {/* Right Column on Desktop / Bottom on Mobile */}
+        <View style={[styles.rightCol, isDesktop && styles.rightColDesktop]}>
+          {/* 7-Day Horizon Date Selector */}
+          <DateSelector
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
           />
+
+          {/* Realtime Availability Grid */}
+          <View style={styles.slotSection}>
+            <View style={styles.slotHeaderRow}>
+              <Text style={styles.dateLabel}>
+                {formatDisplayDate(selectedDate)}
+              </Text>
+              {isLoading && (
+                <View style={styles.syncRow}>
+                  <ActivityIndicator size="small" color="#0284c7" />
+                  <Text style={styles.syncText}>{t('syncingRealtime')}</Text>
+                </View>
+              )}
+            </View>
+
+            <SlotGrid
+              slots={slots}
+              onSelectSlot={handleSelectSlot}
+              onRefresh={refresh}
+            />
+          </View>
         </View>
       </View>
 
@@ -251,15 +310,80 @@ const getEquipmentIcon = (eq: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
+  },
+  desktopBreadcrumbRow: {
+    maxWidth: 1140,
+    width: '100%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.sm,
+    gap: 10,
+  },
+  desktopBackBtn: {
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  desktopBackBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0284c7',
+  },
+  desktopBreadcrumbCurrent: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  mainLayout: {
+    width: '100%',
+    alignSelf: 'center',
+  },
+  mainLayoutDesktop: {
+    maxWidth: 1140,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 24,
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.xs,
+  },
+  leftCol: {
+    width: '100%',
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.base,
+  },
+  leftColDesktop: {
+    width: 440,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  rightCol: {
+    width: '100%',
+    paddingHorizontal: spacing.base,
+  },
+  rightColDesktop: {
+    flex: 1,
+    paddingHorizontal: 0,
+  },
+  heroContainerDesktop: {
+    width: '100%',
+    height: 270,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    backgroundColor: colors.borderStrong,
   },
   heroContainer: {
     width: '100%',
-    maxWidth: 860,
-    alignSelf: 'center',
     height: 230,
     position: 'relative',
-    backgroundColor: '#cbd5e1',
+    backgroundColor: colors.borderStrong,
   },
   heroImage: {
     width: '100%',
@@ -267,133 +391,136 @@ const styles = StyleSheet.create({
   },
   floatingBackButton: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 52 : 36,
-    left: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    left: spacing.base,
+    width: layout.minTouchTarget,
+    height: layout.minTouchTarget,
+    borderRadius: layout.minTouchTarget / 2,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   floatingBackText: {
-    color: '#ffffff',
-    fontSize: 26,
+    color: colors.textInverse,
+    fontSize: 28,
     fontWeight: '300',
-    lineHeight: 28,
+    lineHeight: 30,
+    marginTop: -2,
     textAlign: 'center',
   },
   content: {
     width: '100%',
-    maxWidth: 860,
+    maxWidth: 680,
     alignSelf: 'center',
-    padding: 16,
-    paddingBottom: 40,
+    padding: spacing.base,
   },
   titleSection: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    padding: spacing.base,
+    borderRadius: layout.radii.lg,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    ...shadows.card,
   },
   nameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   roomName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.textPrimary,
     flex: 1,
+    marginRight: spacing.sm,
   },
   buildingBadge: {
-    backgroundColor: '#e0f2fe',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: layout.radii.sm,
     borderWidth: 1,
-    borderColor: '#bae6fd',
+    borderColor: colors.borderHighlight,
   },
   buildingBadgeText: {
-    color: '#0369a1',
-    fontSize: 12,
-    fontWeight: '700',
+    color: colors.primaryDark,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
   },
   capacityText: {
-    fontSize: 14,
-    color: '#475569',
-    fontWeight: '500',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   capacityHighlight: {
-    fontWeight: '700',
-    color: '#0f172a',
+    fontWeight: typography.weights.bold,
+    color: colors.textPrimary,
   },
   equipmentSection: {
-    backgroundColor: '#ffffff',
-    padding: 14,
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: layout.radii.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 12,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    ...shadows.card,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   equipmentRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
   },
   equipmentChip: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: colors.surfaceSubtle,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 1,
+    borderRadius: layout.radii.sm,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   equipmentChipText: {
-    fontSize: 12,
-    color: '#334155',
-    fontWeight: '500',
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   slotSection: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    padding: spacing.base,
+    borderRadius: layout.radii.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginTop: 12,
+    borderColor: colors.border,
+    marginTop: spacing.md,
+    ...shadows.card,
   },
   slotHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   dateLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.textPrimary,
   },
   syncRow: {
     flexDirection: 'row',
@@ -401,29 +528,34 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   syncText: {
-    fontSize: 11,
-    color: '#0284c7',
-    fontWeight: '600',
+    fontSize: typography.sizes.xs,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
+    backgroundColor: colors.background,
   },
   notFoundText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginBottom: 16,
+    fontSize: typography.sizes.base,
+    color: colors.textMuted,
+    marginBottom: spacing.base,
   },
   backButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: layout.radii.sm,
+    minHeight: layout.minTouchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    color: colors.textInverse,
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.base,
   },
 });

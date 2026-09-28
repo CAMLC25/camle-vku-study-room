@@ -6,6 +6,7 @@ import { notificationService } from './src/services/notificationService';
 import { syncService } from './src/services/syncService';
 
 import { AppDialog } from './src/components/AppDialog';
+import { NotificationBanner } from './src/components/NotificationBanner';
 
 export default function App() {
   useEffect(() => {
@@ -16,9 +17,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="auto" />
       <RootNavigator />
       <AppDialog />
+      <NotificationBanner />
     </SafeAreaProvider>
   );
 }

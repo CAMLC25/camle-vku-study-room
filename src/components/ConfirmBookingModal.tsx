@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
+  ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Room } from '../types/room';
 import { SlotIndex, TIME_SLOT_DEFINITIONS } from '../types/slot';
 import { Booking, BookingHold } from '../types/booking';
@@ -46,6 +48,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
   onSuccess,
 }) => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [hold, setHold] = useState<BookingHold | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(MAX_HOLD_SECONDS);
   const [isHolding, setIsHolding] = useState<boolean>(false);
@@ -256,7 +259,12 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
     >
       <View style={styles.overlay}>
         <Pressable style={styles.backdropPressable} onPress={handleDismiss} />
-        <View style={styles.modalContent}>
+        <View
+          style={[
+            styles.modalContent,
+            { paddingBottom: Math.max(insets.bottom, 16) + 8 },
+          ]}
+        >
           {/* Top Grabber Handle */}
           <View style={styles.dragHandle} />
 
@@ -277,13 +285,20 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* 90-Second Soft Hold Countdown Bar */}
-          <View
-            style={[
-              styles.holdCard,
-              isHoldExpired ? styles.holdCardExpired : styles.holdCardActive,
-            ]}
+          {/* Scrollable Modal Body for Mobile Responsiveness */}
+          <ScrollView
+            style={styles.modalScrollBody}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
           >
+            {/* 90-Second Soft Hold Countdown Bar */}
+            <View
+              style={[
+                styles.holdCard,
+                isHoldExpired ? styles.holdCardExpired : styles.holdCardActive,
+              ]}
+            >
             <View style={styles.holdRow}>
               <View style={styles.holdIconCircle}>
                 <Text style={styles.holdIcon}>{isHoldExpired ? '⚠️' : '⏱️'}</Text>
@@ -442,6 +457,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
               <Text style={styles.errorMessage}>{localizedError.message}</Text>
             </View>
           )}
+          </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.actionRow}>
@@ -488,6 +504,10 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
               style={styles.cancelButton}
               onPress={handleDismiss}
               disabled={isConfirming}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('cancel')}
+              hitSlop={{ top: 6, bottom: 6, left: 12, right: 12 }}
             >
               <Text style={styles.cancelText}>{t('cancel')}</Text>
             </TouchableOpacity>
@@ -513,7 +533,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 38 : 24,
+    maxHeight: '88%',
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -525,6 +548,12 @@ const styles = StyleSheet.create({
         elevation: 12,
       },
     }),
+  },
+  modalScrollBody: {
+    maxHeight: 400,
+  },
+  modalScrollContent: {
+    paddingBottom: 8,
   },
   dragHandle: {
     width: 40,
@@ -765,6 +794,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: '#0284c7',
     paddingVertical: 14,
+    minHeight: 48,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -793,8 +823,10 @@ const styles = StyleSheet.create({
   retryHoldButton: {
     backgroundColor: '#d97706',
     paddingVertical: 14,
+    minHeight: 48,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   retryHoldText: {
     color: '#ffffff',
@@ -804,8 +836,10 @@ const styles = StyleSheet.create({
   selectAnotherButton: {
     backgroundColor: '#475569',
     paddingVertical: 14,
+    minHeight: 48,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   selectAnotherText: {
     color: '#ffffff',
@@ -816,8 +850,10 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   cancelButton: {
-    paddingVertical: 10,
+    paddingVertical: 12,
+    minHeight: 48,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelText: {
     color: '#64748b',

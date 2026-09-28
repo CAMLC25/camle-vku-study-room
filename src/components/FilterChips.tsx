@@ -132,14 +132,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
 
       {/* 3. Equipment Row */}
       <View style={styles.filterSection}>
-        <View style={styles.equipmentLabelRow}>
-          <Text style={styles.sectionLabel}>{t('equipmentTitle')}:</Text>
-          {isFilterActive && (
-            <TouchableOpacity onPress={onResetFilters} style={styles.resetButton}>
-              <Text style={styles.resetButtonText}>{t('clearFilters')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={styles.sectionLabel}>{t('equipmentLabel')}:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -167,6 +160,19 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
           })}
         </ScrollView>
       </View>
+
+      {/* 4. Action Row (Reset Filters) */}
+      {isFilterActive && (
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            onPress={onResetFilters}
+            style={styles.resetButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.resetButtonText}>↺ {t('clearFilters')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -188,13 +194,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#64748b',
-    width: 72,
-  },
-  equipmentLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 72,
+    width: 60,
   },
   chipsScroll: {
     gap: 6,
@@ -221,8 +221,21 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
   },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 2,
+  },
   resetButton: {
-    paddingHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   resetButtonText: {
     fontSize: 11,

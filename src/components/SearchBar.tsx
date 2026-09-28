@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
+import { colors, layout, spacing, typography } from '../theme/theme';
 
 interface SearchBarProps {
   value: string;
@@ -19,7 +20,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search study room or lab...',
 }) => {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityRole="search">
       <View style={styles.searchIconContainer}>
         <Text style={styles.searchIcon}>🔍</Text>
       </View>
@@ -28,16 +29,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.textLight}
         autoCapitalize="none"
         autoCorrect={false}
+        returnKeyType="search"
         clearButtonMode="while-editing"
+        accessibilityLabel={placeholder}
       />
       {value.length > 0 && (
         <TouchableOpacity
           onPress={() => onChangeText('')}
           style={styles.clearButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search text"
         >
           <Text style={styles.clearButtonText}>✕</Text>
         </TouchableOpacity>
@@ -50,15 +56,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: layout.radii.md,
+    paddingHorizontal: spacing.md,
+    height: layout.buttonHeightSm + 6, // 44dp
+    minHeight: layout.minTouchTarget,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   searchIconContainer: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   searchIcon: {
     fontSize: 14,
@@ -66,23 +73,23 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    fontSize: 14,
-    color: '#0f172a',
+    fontSize: typography.sizes.base,
+    color: colors.textPrimary,
     padding: 0,
   },
   clearButton: {
-    padding: 4,
-    marginLeft: 6,
-    borderRadius: 12,
-    backgroundColor: '#cbd5e1',
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.borderStrong,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: spacing.xs,
   },
   clearButtonText: {
     fontSize: 10,
-    color: '#334155',
-    fontWeight: '700',
+    color: colors.textSecondary,
+    fontWeight: typography.weights.bold,
   },
 });
+

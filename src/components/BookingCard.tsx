@@ -187,6 +187,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
@@ -345,6 +346,8 @@ const styles = StyleSheet.create({
   passButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
     gap: 6,
     backgroundColor: '#0284c7',
     paddingHorizontal: 16,
@@ -374,6 +377,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     paddingHorizontal: 14,
     paddingVertical: 9,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -387,6 +393,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc2626',
     paddingHorizontal: 14,
     paddingVertical: 9,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 10,
   },
   resolveButtonText: {

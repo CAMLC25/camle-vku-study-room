@@ -8,8 +8,9 @@ import {
   FlatList,
   Platform,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from '../components/layout/SafeScreen';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,6 +25,7 @@ import { NetworkBanner } from '../components/NetworkBanner';
 import { useTranslation } from '../store/useLanguageStore';
 import { getTodayDateString, getCurrentOrNextSlotIndex } from '../utils/date';
 import { SlotIndex } from '../types/slot';
+import { colors, layout, spacing, typography } from '../theme/theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Rooms'>,
@@ -32,6 +34,8 @@ type Props = CompositeScreenProps<
 
 export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
   // Narrow Zustand selectors (no whole-store subscriptions)
   const rooms = useBookingStore((state) => state.rooms);
   const isLoading = useBookingStore((state) => state.isRoomsLoading);
@@ -152,211 +156,245 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
   }, [filters]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeScreen edges={['top', 'left', 'right']} backgroundColor={colors.surface}>
       <View style={styles.container}>
         {/* Offline & Sync Status Banner */}
         <NetworkBanner />
 
-        {/* Top Header */}
-        <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <View>
-              <Text style={styles.appTitle}>
-                {language === 'vi' ? 'Không gian học tập VKU' : 'VKU Study Spaces'}
-              </Text>
-              <Text style={styles.appSubtitle}>
-                {language === 'vi'
-                  ? `Hiển thị ${filteredRooms.length} / ${rooms.length} phòng học`
-                  : `${filteredRooms.length} of ${rooms.length} rooms match`}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.filterToggleButton,
-                (showFilters || activeFilterCount > 0) && styles.filterToggleActive,
-              ]}
-              onPress={() => setShowFilters((prev) => !prev)}
-              activeOpacity={0.7}
-            >
-              <Text
+        <View style={styles.contentWrapper}>
+          {/* Top Header */}
+          <View style={[styles.header, isDesktop && styles.headerDesktop]}>
+            <View style={styles.titleRow}>
+              <View style={styles.titleTextCol}>
+                <Text style={styles.appTitle} accessibilityRole="header">
+                  {language === 'vi' ? 'Không gian học tập VKU' : 'VKU Study Spaces'}
+                </Text>
+                <Text style={styles.appSubtitle}>
+                  {language === 'vi'
+                    ? `Hiển thị ${filteredRooms.length} / ${rooms.length} phòng học`
+                    : `${filteredRooms.length} of ${rooms.length} rooms match`}
+                </Text>
+              </View>
+              <TouchableOpacity
                 style={[
-                  styles.filterToggleText,
-                  (showFilters || activeFilterCount > 0) && styles.filterToggleTextActive,
+                  styles.filterToggleButton,
+                  (showFilters || activeFilterCount > 0) && styles.filterToggleActive,
                 ]}
+                onPress={() => setShowFilters((prev) => !prev)}
+                activeOpacity={0.7}
               >
-                {t('filterTitle')} {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.filterToggleText,
+                    (showFilters || activeFilterCount > 0) && styles.filterToggleTextActive,
+                  ]}
+                >
+                  {t('filterTitle')} {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Input */}
+            <View style={styles.searchWrapper}>
+              <SearchBar
+                value={filters.searchQuery}
+                onChangeText={handleSearchChange}
+                placeholder={t('searchPlaceholder')}
+              />
+            </View>
           </View>
 
-          {/* Search Input */}
-          <View style={styles.searchWrapper}>
-            <SearchBar
-              value={filters.searchQuery}
-              onChangeText={handleSearchChange}
-              placeholder={t('searchPlaceholder')}
+          {/* Collapsible Filter Panel */}
+          {showFilters && (
+            <FilterChips
+              filters={filters}
+              onUpdateFilters={setFilters}
+              onResetFilters={resetFilters}
             />
-          </View>
+          )}
+
+          {/* Content Area */}
+          {isLoading && rooms.length === 0 ? (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color="#0284c7" />
+              <Text style={styles.loadingText}>{t('loading')}</Text>
+            </View>
+          ) : error && rooms.length === 0 ? (
+            <View style={styles.centerContainer}>
+              <Text style={styles.errorTitle}>
+                {language === 'vi' ? 'Không thể tải danh sách phòng' : 'Unable to Load Rooms'}
+              </Text>
+              <Text style={styles.errorSubtitle}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchRooms}>
+                <Text style={styles.retryButtonText}>{t('refresh')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <FlatList
+              key={isDesktop ? 'desktop-grid-2' : 'mobile-list-1'}
+              data={filteredRooms}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              numColumns={isDesktop ? 2 : 1}
+              columnWrapperStyle={isDesktop ? styles.columnWrapper : undefined}
+              getItemLayout={isDesktop ? undefined : getItemLayout}
+              contentContainerStyle={[
+                styles.listContent,
+                isDesktop && styles.listContentDesktop,
+              ]}
+              showsVerticalScrollIndicator={false}
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              // 60 FPS FlatList Performance Parameters
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={5}
+              removeClippedSubviews={Platform.OS === 'android'}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isLoading}
+                  onRefresh={fetchRooms}
+                  tintColor="#0284c7"
+                  colors={['#0284c7']}
+                />
+              }
+              ListEmptyComponent={
+                <EmptyState
+                  title={t('emptyRoomsTitle')}
+                  subtitle={t('emptyRoomsSubtitle')}
+                  onAction={resetFilters}
+                  actionText={t('clearFilters')}
+                />
+              }
+            />
+          )}
         </View>
-
-        {/* Collapsible Filter Panel */}
-        {showFilters && (
-          <FilterChips
-            filters={filters}
-            onUpdateFilters={setFilters}
-            onResetFilters={resetFilters}
-          />
-        )}
-
-        {/* Content Area */}
-        {isLoading && rooms.length === 0 ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#0284c7" />
-            <Text style={styles.loadingText}>{t('loading')}</Text>
-          </View>
-        ) : error && rooms.length === 0 ? (
-          <View style={styles.centerContainer}>
-            <Text style={styles.errorTitle}>
-              {language === 'vi' ? 'Không thể tải danh sách phòng' : 'Unable to Load Rooms'}
-            </Text>
-            <Text style={styles.errorSubtitle}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={fetchRooms}>
-              <Text style={styles.retryButtonText}>{t('refresh')}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredRooms}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            getItemLayout={getItemLayout}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            // 60 FPS FlatList Performance Parameters
-            initialNumToRender={8}
-            maxToRenderPerBatch={8}
-            windowSize={5}
-            removeClippedSubviews={Platform.OS === 'android'}
-            refreshControl={
-              <RefreshControl
-                refreshing={isLoading}
-                onRefresh={fetchRooms}
-                tintColor="#0284c7"
-                colors={['#0284c7']}
-              />
-            }
-            ListEmptyComponent={
-              <EmptyState
-                title={t('emptyRoomsTitle')}
-                subtitle={t('emptyRoomsSubtitle')}
-                onAction={resetFilters}
-                actionText={t('clearFilters')}
-              />
-            }
-          />
-        )}
       </View>
-    </SafeAreaView>
+    </SafeScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
+  },
+  contentWrapper: {
+    flex: 1,
     width: '100%',
-    maxWidth: 860,
+    maxWidth: 1140,
     alignSelf: 'center',
   },
+  columnWrapper: {
+    gap: 16,
+    justifyContent: 'space-between',
+  },
+  headerDesktop: {
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.sm,
+  },
+  listContentDesktop: {
+    paddingTop: spacing.xs,
+    paddingBottom: 40,
+  },
   header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
+  },
+  titleTextCol: {
+    flex: 1,
+    marginRight: spacing.sm,
   },
   appTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.textPrimary,
   },
   appSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: typography.sizes.xs,
+    color: colors.textMuted,
     marginTop: 2,
-    fontWeight: '500',
+    fontWeight: typography.weights.medium,
   },
   filterToggleButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    minHeight: layout.minTouchTarget,
+    minWidth: layout.minTouchTarget,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: layout.radii.sm,
+    backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterToggleActive: {
-    backgroundColor: '#0284c7',
-    borderColor: '#0284c7',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterToggleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.textSecondary,
   },
   filterToggleTextActive: {
-    color: '#ffffff',
+    color: colors.textInverse,
   },
   searchWrapper: {
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 110,
+    padding: spacing.base,
+    paddingBottom: 80,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#64748b',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.textMuted,
   },
   errorTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 6,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   errorSubtitle: {
-    fontSize: 13,
-    color: '#ef4444',
+    fontSize: typography.sizes.sm,
+    color: colors.conflicted,
     textAlign: 'center',
-    marginBottom: 16,
-    maxWidth: 260,
+    marginBottom: spacing.base,
+    maxWidth: 280,
   },
   retryButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: layout.radii.sm,
+    minHeight: layout.minTouchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   retryButtonText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
+    color: colors.textInverse,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
   },
 });

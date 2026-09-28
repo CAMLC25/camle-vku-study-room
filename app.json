@@ -1,15 +1,18 @@
 {
   "expo": {
-    "name": "vku-study-room",
+    "name": "VKU Study Spaces",
     "slug": "vku-study-room",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.udn.vku.studyroom"
     },
     "android": {
+      "package": "vn.udn.vku.studyroom",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
