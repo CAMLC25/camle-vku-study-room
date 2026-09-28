@@ -34,6 +34,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:web": "expo export -p web",
+    "deploy:cf": "npm run build:web && npx wrangler deploy dist --name camle-vku-study-room --compatibility-date 2024-09-23",
     "test": "npm run test:concurrency && npm run test:outbox && npm run test:notifications && npm run test:auth",
     "test:concurrency": "tsx -r ./test/setup.ts test/concurrency-test.ts",
     "test:outbox": "tsx -r ./test/setup.ts test/offline-outbox-conflict.test.ts",
