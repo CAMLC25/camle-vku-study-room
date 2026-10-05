@@ -16,14 +16,12 @@ import { SafeScreen } from '../components/layout/SafeScreen';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../store/useLanguageStore';
 import { colors, layout, spacing, typography, shadows } from '../theme/theme';
-import { GoogleIcon } from '../components/icons/GoogleIcon';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language, setLanguage } = useTranslation();
   const login = useAuthStore((state) => state.login);
-  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
   const isLoading = useAuthStore((state) => state.isLoading);
   const authError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
@@ -37,9 +35,18 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setLocalError(null);
     clearError();
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail) {
       setLocalError(t('fillAllFields'));
+      return;
+    }
+
+    if (!trimmedEmail.includes('@')) {
+      setLocalError(
+        language === 'vi'
+          ? 'Vui lòng nhập đúng địa chỉ Email (VD: sinhvien@gmail.com)'
+          : 'Please enter a valid email address'
+      );
       return;
     }
 
@@ -54,74 +61,67 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleGoogleSelect = async () => {
-    setLocalError(
-      language === 'vi'
-        ? 'Tính năng Google OAuth chưa được kích hoạt trên Supabase. Bạn vui lòng sử dụng Email để Đăng nhập hoặc bấm Đăng ký ngay bên dưới.'
-        : 'Google OAuth is not enabled on Supabase. Please sign in with your email or register an account below.'
-    );
-  };
-
   const displayError = localError || authError;
 
   return (
     <SafeScreen
       edges={['top', 'bottom', 'left', 'right']}
-      backgroundColor="#0c4a6e"
-      statusBarStyle="light"
+      backgroundColor="#f8fafc"
+      statusBarStyle="dark"
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Top Header Bar with VKU Branding & Language Switcher */}
-        <View style={styles.topHeader}>
-          <View style={styles.topHeaderInner}>
-            <View style={styles.headerBrandCol}>
-              <View style={styles.vkuMiniBadge}>
-                <Text style={styles.vkuMiniText}>VKU SMART CAMPUS</Text>
-              </View>
-              <Text style={styles.vkuTitle}>
-                {language === 'vi'
-                  ? 'ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN'
-                  : 'VIETNAM - KOREA UNIVERSITY OF ICT'}
-              </Text>
-            </View>
-
-            <View style={styles.langPillWrapper}>
-              <TouchableOpacity
-                style={[styles.langPillBtn, language === 'vi' && styles.langPillActive]}
-                onPress={() => setLanguage('vi')}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Tiếng Việt"
-              >
-                <Text style={[styles.langPillText, language === 'vi' && styles.langPillTextActive]}>
-                  VN
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.langPillBtn, language === 'en' && styles.langPillActive]}
-                onPress={() => setLanguage('en')}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="English"
-              >
-                <Text style={[styles.langPillText, language === 'en' && styles.langPillTextActive]}>
-                  EN
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Main Card */}
+          {/* Main Clean Card */}
           <View style={styles.formCard}>
+            {/* Top Bar inside Card: Branding + Language Selector */}
+            <View style={styles.cardTopRow}>
+              <View style={styles.vkuMiniBadge}>
+                <Text style={styles.vkuMiniText}>VKU SMART STUDY</Text>
+              </View>
+
+              <View style={styles.langPillWrapper}>
+                <TouchableOpacity
+                  style={[styles.langPillBtn, language === 'vi' && styles.langPillActive]}
+                  onPress={() => setLanguage('vi')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Tiếng Việt"
+                >
+                  <Text
+                    style={[
+                      styles.langPillText,
+                      language === 'vi' && styles.langPillTextActive,
+                    ]}
+                  >
+                    VN
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.langPillBtn, language === 'en' && styles.langPillActive]}
+                  onPress={() => setLanguage('en')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="English"
+                >
+                  <Text
+                    style={[
+                      styles.langPillText,
+                      language === 'en' && styles.langPillTextActive,
+                    ]}
+                  >
+                    EN
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Header Title inside Card */}
             <View style={styles.cardHeader}>
               <View style={styles.iconCircle}>
@@ -159,8 +159,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   }}
                   placeholder={
                     language === 'vi'
-                      ? 'Nhập Email hoặc Mã sinh viên (VD: 21IT001)'
-                      : 'Enter Email or Student ID (e.g. 21IT001)'
+                      ? 'Nhập địa chỉ Email (VD: sinhvien@gmail.com)'
+                      : 'Enter your email (e.g. student@gmail.com)'
                   }
                   placeholderTextColor="#94a3b8"
                   keyboardType="email-address"
@@ -222,28 +222,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
-            {/* Divider OR */}
-            <View style={styles.orDividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.orText}>{t('orDivider')}</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Sign-In Button */}
-            <TouchableOpacity
-              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
-              onPress={() => handleGoogleSelect()}
-              disabled={isLoading}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={t('loginWithGoogle')}
-            >
-              <View style={styles.googleIconContainer}>
-                <GoogleIcon size={18} />
-              </View>
-              <Text style={styles.googleButtonText}>{t('loginWithGoogle')}</Text>
-            </TouchableOpacity>
-
             {/* Register Navigation Link */}
             <View style={styles.switchAuthRow}>
               <Text style={styles.switchAuthText}>{t('noAccountPrompt')} </Text>
@@ -256,30 +234,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.switchAuthLink}>{t('registerNow')}</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Campus Feature Highlights Inside Card */}
-            <View style={styles.featureHighlights}>
-              <View style={styles.featureItem}>
-                <Text style={styles.featureIcon}>⚡</Text>
-                <Text style={styles.featureText}>
-                  {language === 'vi' ? 'Giữ chỗ 90s tức thì' : 'Instant 90s Hold'}
-                </Text>
-              </View>
-              <View style={styles.featureDivider} />
-              <View style={styles.featureItem}>
-                <Text style={styles.featureIcon}>🛡️</Text>
-                <Text style={styles.featureText}>
-                  {language === 'vi' ? 'Chuẩn hạn mức SV' : 'Standard Quotas'}
-                </Text>
-              </View>
-              <View style={styles.featureDivider} />
-              <View style={styles.featureItem}>
-                <Text style={styles.featureIcon}>📱</Text>
-                <Text style={styles.featureText}>
-                  {language === 'vi' ? 'Thẻ mượn QR Code' : 'QR Check-in Pass'}
-                </Text>
-              </View>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -290,87 +244,105 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
-  },
-  topHeader: {
-    backgroundColor: '#0c4a6e',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  topHeaderInner: {
-    maxWidth: 1040,
-    width: '100%',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerBrandCol: {
-    flex: 1,
-  },
-  vkuMiniBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginBottom: 4,
-  },
-  vkuMiniText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#38bdf8',
-    letterSpacing: 0.8,
-  },
-  vkuTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#f8fafc',
-    letterSpacing: 0.4,
-  },
-  langPillWrapper: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 20,
-    padding: 3,
-    gap: 3,
-  },
-  langPillBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  langPillActive: {
-    backgroundColor: '#ffffff',
-  },
-  langPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#cbd5e1',
-  },
-  langPillTextActive: {
-    color: '#0c4a6e',
+    backgroundColor: '#f8fafc',
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.lg,
-    maxWidth: 500,
+    paddingVertical: spacing.xl,
+    maxWidth: 460,
     width: '100%',
     alignSelf: 'center',
     justifyContent: 'center',
   },
+  formCard: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow:
+          '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+      } as any,
+    }),
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.base,
+  },
+  vkuMiniBadge: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  vkuMiniText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#15803d',
+    letterSpacing: 0.6,
+  },
+  langPillWrapper: {
+    flexDirection: 'row',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 16,
+    padding: 2,
+    gap: 2,
+  },
+  langPillBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 14,
+  },
+  langPillActive: {
+    backgroundColor: '#ffffff',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      } as any,
+    }),
+  },
+  langPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  langPillTextActive: {
+    color: '#0284c7',
+  },
   cardHeader: {
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#e0f2fe',
     borderWidth: 2,
     borderColor: '#bae6fd',
@@ -380,7 +352,7 @@ const styles = StyleSheet.create({
     ...shadows.subtle,
   },
   iconEmoji: {
-    fontSize: 34,
+    fontSize: 30,
   },
   title: {
     fontSize: 22,
@@ -395,28 +367,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 320,
     lineHeight: 18,
-  },
-  formCard: {
-    backgroundColor: '#ffffff',
-    padding: 24,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow:
-          '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
-      } as any,
-    }),
   },
   errorBanner: {
     flexDirection: 'row',
@@ -450,10 +400,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: '#f8fafc',
     borderRadius: layout.radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#e2e8f0',
     paddingHorizontal: spacing.sm + 2,
     minHeight: layout.buttonHeight,
   },
@@ -474,7 +424,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#0284c7',
     minHeight: layout.buttonHeight,
     borderRadius: layout.radii.md,
     justifyContent: 'center',
@@ -482,7 +432,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
+        shadowColor: '#0284c7',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 6,
@@ -491,42 +441,6 @@ const styles = StyleSheet.create({
         elevation: 3,
       },
     }),
-  },
-  orDividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  orText: {
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.textLight,
-    paddingHorizontal: spacing.sm,
-    letterSpacing: 1,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: layout.buttonHeight,
-    borderRadius: layout.radii.md,
-    ...shadows.subtle,
-  },
-  googleIconContainer: {
-    marginRight: spacing.sm,
-  },
-  googleButtonText: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
   },
   buttonDisabled: {
     opacity: 0.65,
@@ -537,7 +451,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   loginButtonText: {
-    color: colors.textInverse,
+    color: '#ffffff',
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
   },
@@ -545,7 +459,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   switchAuthText: {
     fontSize: typography.sizes.xs,
@@ -554,34 +468,6 @@ const styles = StyleSheet.create({
   switchAuthLink: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
-    color: colors.primary,
-  },
-  featureHighlights: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  featureItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  featureIcon: {
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  featureText: {
-    fontSize: 10,
-    color: '#64748b',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  featureDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#e2e8f0',
+    color: '#0284c7',
   },
 });

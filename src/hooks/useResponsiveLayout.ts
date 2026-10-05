@@ -10,14 +10,16 @@ export function useResponsiveLayout() {
 
   const isLandscape = width > height;
   const isTablet = width >= 768;
-  const columns = width >= 1024 ? 3 : width >= 640 ? 2 : 1;
+  const columns = width >= 768 ? 2 : 1;
 
-  // Calculate card width taking padding and gaps into account
+  // Cap effective width to the contentWrapper maxWidth (1140)
+  const maxContainerWidth = 1140;
+  const effectiveWidth = Math.min(width, maxContainerWidth);
   const totalHorizontalPadding = 32;
   const gap = 16;
   const cardWidth = columns > 1
-    ? (width - totalHorizontalPadding - (columns - 1) * gap) / columns
-    : width - totalHorizontalPadding;
+    ? (effectiveWidth - totalHorizontalPadding - (columns - 1) * gap) / columns
+    : effectiveWidth - totalHorizontalPadding;
 
   return {
     width,

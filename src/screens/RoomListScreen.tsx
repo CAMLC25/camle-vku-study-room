@@ -149,7 +149,7 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
         index={index}
         onPress={handleRoomPress}
         isAvailableNow={isRoomAvailableNow(item.id)}
-        style={columns > 1 ? { width: cardWidth } : undefined}
+        style={columns > 1 ? { flex: 1, maxWidth: cardWidth } : undefined}
       />
     ),
     [handleRoomPress, isRoomAvailableNow, columns, cardWidth]

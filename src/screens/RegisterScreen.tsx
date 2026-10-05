@@ -16,14 +16,12 @@ import { SafeScreen } from '../components/layout/SafeScreen';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../store/useLanguageStore';
 import { colors, layout, spacing, typography, shadows } from '../theme/theme';
-import { GoogleIcon } from '../components/icons/GoogleIcon';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language } = useTranslation();
   const register = useAuthStore((state) => state.register);
-  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
   const isLoading = useAuthStore((state) => state.isLoading);
   const authError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
@@ -37,20 +35,21 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const handleGoogleSelect = async () => {
-    setLocalError(
-      language === 'vi'
-        ? 'Tính năng Google OAuth chưa được kích hoạt trên Supabase Dashboard. Vui lòng điền thông tin và bấm Đăng ký tài khoản ở bên dưới.'
-        : 'Google OAuth is not enabled on Supabase Dashboard. Please fill in your details and register using email below.'
-    );
-  };
-
   const handleRegister = async () => {
     setLocalError(null);
     clearError();
 
     if (!fullName.trim() || !studentCode.trim() || !email.trim() || !password) {
       setLocalError(t('fillAllFields'));
+      return;
+    }
+
+    if (!email.trim().includes('@')) {
+      setLocalError(
+        language === 'vi'
+          ? 'Vui lòng nhập đúng định dạng Email (VD: sinhvien@gmail.com)'
+          : 'Please enter a valid email address'
+      );
       return;
     }
 
@@ -82,8 +81,8 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeScreen
       edges={['top', 'bottom', 'left', 'right']}
-      backgroundColor="#0c4a6e"
-      statusBarStyle="light"
+      backgroundColor="#f8fafc"
+      statusBarStyle="dark"
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
@@ -94,33 +93,33 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Bar with Back Button */}
-          <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel={t('back')}
-            >
-              <Text style={styles.backButtonText}>‹</Text>
-            </TouchableOpacity>
-
-            <View style={styles.vkuMiniBadge}>
-              <Text style={styles.vkuMiniText}>VKU REGISTRATION</Text>
-            </View>
-          </View>
-
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title} accessibilityRole="header">
-              {t('registerTitle')}
-            </Text>
-            <Text style={styles.subtitle}>{t('registerSubtitle')}</Text>
-          </View>
-
-          {/* Form Card */}
+          {/* Main Clean Card */}
           <View style={styles.formCard}>
+            {/* Top Bar inside Card */}
+            <View style={styles.cardTopRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('back')}
+              >
+                <Text style={styles.backButtonText}>‹ {t('back')}</Text>
+              </TouchableOpacity>
+
+              <View style={styles.vkuMiniBadge}>
+                <Text style={styles.vkuMiniText}>VKU REGISTRATION</Text>
+              </View>
+            </View>
+
+            {/* Header inside Card */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.title} accessibilityRole="header">
+                {t('registerTitle')}
+              </Text>
+              <Text style={styles.subtitle}>{t('registerSubtitle')}</Text>
+            </View>
+
             {/* Notification / Error Banner */}
             {displayError && (
               <View
@@ -160,7 +159,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     if (displayError) clearError();
                   }}
                   placeholder={t('fullNamePlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor="#94a3b8"
                   autoCapitalize="words"
                   editable={!isLoading}
                 />
@@ -181,7 +180,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                       if (displayError) clearError();
                     }}
                     placeholder={t('studentCodePlaceholder')}
-                    placeholderTextColor={colors.textLight}
+                    placeholderTextColor="#94a3b8"
                     autoCapitalize="characters"
                     editable={!isLoading}
                   />
@@ -197,7 +196,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     value={className}
                     onChangeText={setClassName}
                     placeholder={t('classNamePlaceholder')}
-                    placeholderTextColor={colors.textLight}
+                    placeholderTextColor="#94a3b8"
                     autoCapitalize="characters"
                     editable={!isLoading}
                   />
@@ -218,7 +217,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     if (displayError) clearError();
                   }}
                   placeholder={t('emailPlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor="#94a3b8"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -240,7 +239,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     if (displayError) clearError();
                   }}
                   placeholder={t('passwordPlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor="#94a3b8"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -269,7 +268,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     if (displayError) clearError();
                   }}
                   placeholder={t('confirmPasswordPlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor="#94a3b8"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -296,28 +295,6 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
-            {/* Divider OR */}
-            <View style={styles.orDividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.orText}>{t('orDivider')}</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Sign-In / Sign-Up Button */}
-            <TouchableOpacity
-              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
-              onPress={() => handleGoogleSelect()}
-              disabled={isLoading}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={t('loginWithGoogle')}
-            >
-              <View style={styles.googleIconContainer}>
-                <GoogleIcon size={18} />
-              </View>
-              <Text style={styles.googleButtonText}>{t('loginWithGoogle')}</Text>
-            </TouchableOpacity>
-
             {/* Return to Login link */}
             <View style={styles.switchAuthRow}>
               <Text style={styles.switchAuthText}>{t('hasAccountPrompt')} </Text>
@@ -340,73 +317,88 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    maxWidth: 520,
+    paddingVertical: spacing.xl,
+    maxWidth: 500,
     width: '100%',
     alignSelf: 'center',
     justifyContent: 'center',
   },
-  topBar: {
+  formCard: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow:
+          '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+      } as any,
+    }),
+  },
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.base,
   },
   backButton: {
-    width: layout.minTouchTarget,
-    height: layout.minTouchTarget,
-    borderRadius: layout.minTouchTarget / 2,
-    backgroundColor: colors.surfaceSubtle,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
   },
   backButtonText: {
-    fontSize: 26,
-    color: colors.textPrimary,
-    lineHeight: 28,
-    marginTop: -2,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
   },
   vkuMiniBadge: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.sm,
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: layout.radii.xs,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
   },
   vkuMiniText: {
     fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.primaryDark,
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    color: '#15803d',
+    letterSpacing: 0.6,
   },
-  header: {
+  cardHeader: {
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.extrabold,
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
-  },
-  subtitle: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 4,
     textAlign: 'center',
   },
-  formCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: layout.radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.card,
+  subtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    maxWidth: 340,
+    lineHeight: 18,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -420,8 +412,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   successBanner: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
   },
   errorIcon: {
     fontSize: 14,
@@ -433,7 +425,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   successText: {
-    color: '#065f46',
+    color: '#15803d',
   },
   inlineRow: {
     flexDirection: 'row',
@@ -443,26 +435,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputGroup: {
-    marginBottom: spacing.sm + 2,
+    marginBottom: spacing.md,
   },
   inputLabel: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
     color: colors.textSecondary,
-    marginBottom: spacing.xxs + 2,
+    marginBottom: spacing.xs,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: '#f8fafc',
     borderRadius: layout.radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#e2e8f0',
     paddingHorizontal: spacing.sm + 2,
     minHeight: layout.buttonHeight,
   },
   inputPrefixIcon: {
-    fontSize: 14,
+    fontSize: 15,
     marginRight: spacing.xs,
   },
   textInput: {
@@ -478,15 +470,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#0284c7',
     minHeight: layout.buttonHeight,
     borderRadius: layout.radii.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
+        shadowColor: '#0284c7',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 6,
@@ -495,42 +487,6 @@ const styles = StyleSheet.create({
         elevation: 3,
       },
     }),
-  },
-  orDividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  orText: {
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.textLight,
-    paddingHorizontal: spacing.sm,
-    letterSpacing: 1,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: layout.buttonHeight,
-    borderRadius: layout.radii.md,
-    ...shadows.subtle,
-  },
-  googleIconContainer: {
-    marginRight: spacing.sm,
-  },
-  googleButtonText: {
-    color: colors.textPrimary,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
   },
   buttonDisabled: {
     opacity: 0.65,
@@ -541,7 +497,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   registerButtonText: {
-    color: colors.textInverse,
+    color: '#ffffff',
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
   },
@@ -549,7 +505,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   switchAuthText: {
     fontSize: typography.sizes.xs,
@@ -558,6 +514,6 @@ const styles = StyleSheet.create({
   switchAuthLink: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
-    color: colors.primary,
+    color: '#0284c7',
   },
 });

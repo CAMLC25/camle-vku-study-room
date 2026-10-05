@@ -54,6 +54,20 @@ class SupabaseAuthService implements IAuthService {
         };
       }
 
+      // Sync to public.students table immediately
+      if (data.user) {
+        try {
+          await supabase.from('students').upsert({
+            id: data.user.id,
+            student_id_code: studentCode,
+            full_name: fullName,
+            email,
+          }, { onConflict: 'id' });
+        } catch (stErr) {
+          console.warn('[SupabaseAuthService] student upsert error:', stErr);
+        }
+      }
+
       // 2. Check if email confirmation is required by Supabase project settings
       if (data.user && !data.session) {
         return {
