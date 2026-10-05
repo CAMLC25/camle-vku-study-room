@@ -238,6 +238,7 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* List of Bookings */}
         <FlatList
+          style={styles.flatList}
           key={isDesktop ? 'desktop-bookings-2' : 'mobile-bookings-1'}
           data={filteredBookings}
           keyExtractor={(item) => item.id}
@@ -309,6 +310,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
+    flexShrink: 0,
     paddingHorizontal: spacing.base,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
@@ -329,17 +331,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    maxHeight: 56,
+    height: 52,
+    maxHeight: 52,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   tabsScrollContent: {
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: 7,
     gap: spacing.xs,
     alignItems: 'center',
+    flexDirection: 'row',
   },
   tab: {
-    minHeight: 38,
-    paddingVertical: spacing.xs,
+    height: 36,
     paddingHorizontal: spacing.md,
     borderRadius: layout.radii.sm,
     backgroundColor: colors.surfaceSubtle,
@@ -347,6 +352,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 0,
   },
   tabActive: {
     backgroundColor: colors.primary,
@@ -356,12 +363,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
     color: colors.textSecondary,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   tabTextActive: {
     color: colors.textInverse,
   },
   tabTextConflict: {
     color: colors.conflicted,
+  },
+  flatList: {
+    flex: 1,
+    width: '100%',
   },
   listContent: {
     padding: spacing.base,

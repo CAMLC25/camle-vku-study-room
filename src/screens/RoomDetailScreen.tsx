@@ -67,10 +67,16 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       if (slot && slot.state === 'AVAILABLE') {
         setModalSlotIndex(slotIndex);
       } else if (slot && slot.state === 'MINE') {
-        showAlertDialog(
-          t('yourReservationTitle'),
-          `${t('yourReservationMsg')}\n${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`
-        );
+        showConfirmDialog({
+          title: t('yourReservationTitle'),
+          message: `${t('yourReservationMsg')}\n${room?.name ? `${language === 'vi' ? 'Phòng' : 'Room'}: ${room.name}\n` : ''}${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`,
+          type: 'info',
+          isDestructive: false,
+          confirmText: t('viewInMyBookings'),
+          cancelText: t('close'),
+          onConfirm: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
+          onCancel: () => {},
+        });
       } else if (slot && slot.state === 'HELD_BY_OTHER') {
         showAlertDialog(
           t('heldByOtherTitle'),
@@ -78,7 +84,7 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         );
       }
     },
-    [slots, selectedDate, t]
+    [slots, selectedDate, t, room, language, navigation]
   );
 
   const handleBookingSuccess = useCallback(
