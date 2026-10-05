@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,18 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const updateBooking = useBookingStore((state) => state.updateBooking);
   const setQuotaUsage = useBookingStore((state) => state.setQuotaUsage);
   const myBookings = useBookingStore((state) => state.myBookings);
+
+  const DEFAULT_ROOM_PHOTO =
+    'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&q=80';
+  const [heroPhotoUrl, setHeroPhotoUrl] = useState<string>(
+    room?.photoUrl || DEFAULT_ROOM_PHOTO
+  );
+
+  useEffect(() => {
+    if (room?.photoUrl) {
+      setHeroPhotoUrl(room.photoUrl);
+    }
+  }, [room?.photoUrl]);
 
   // Scoped Realtime availability hook
   const {
@@ -209,11 +221,16 @@ const getEquipmentIcon = (eq: string): string => {
       {!isDesktop && (
         <View style={styles.heroContainer}>
           <Image
-            source={{ uri: room.photoUrl }}
+            source={{ uri: heroPhotoUrl }}
             style={styles.heroImage}
             contentFit="cover"
             transition={250}
             cachePolicy="disk"
+            onError={() => {
+              if (heroPhotoUrl !== DEFAULT_ROOM_PHOTO) {
+                setHeroPhotoUrl(DEFAULT_ROOM_PHOTO);
+              }
+            }}
           />
           <TouchableOpacity
             style={[
@@ -240,11 +257,16 @@ const getEquipmentIcon = (eq: string): string => {
           {isDesktop && (
             <View style={styles.heroContainerDesktop}>
               <Image
-                source={{ uri: room.photoUrl }}
+                source={{ uri: heroPhotoUrl }}
                 style={styles.heroImage}
                 contentFit="cover"
                 transition={250}
                 cachePolicy="disk"
+                onError={() => {
+                  if (heroPhotoUrl !== DEFAULT_ROOM_PHOTO) {
+                    setHeroPhotoUrl(DEFAULT_ROOM_PHOTO);
+                  }
+                }}
               />
             </View>
           )}

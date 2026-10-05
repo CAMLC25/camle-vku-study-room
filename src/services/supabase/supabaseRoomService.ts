@@ -2,6 +2,17 @@ import { IRoomService } from '../types';
 import { Room } from '../../types/room';
 import { supabase } from './client';
 
+const FALLBACK_V301_PHOTO =
+  'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&q=80';
+const DEAD_V301_PHOTO_SUBSTRING = 'photo-1534972195531-a756b1126f24';
+
+export function sanitizePhotoUrl(url?: string): string {
+  if (!url || url.includes(DEAD_V301_PHOTO_SUBSTRING)) {
+    return FALLBACK_V301_PHOTO;
+  }
+  return url;
+}
+
 export class SupabaseRoomService implements IRoomService {
   async getRooms(): Promise<Room[]> {
     const { data, error } = await supabase
@@ -31,7 +42,7 @@ export class SupabaseRoomService implements IRoomService {
     return (data || []).map((row: any) => ({
       id: row.id,
       name: row.name,
-      photoUrl: row.photo_url,
+      photoUrl: sanitizePhotoUrl(row.photo_url),
       building: row.building,
       floor: row.floor,
       capacity: row.capacity,
@@ -69,7 +80,7 @@ export class SupabaseRoomService implements IRoomService {
     return {
       id: data.id,
       name: data.name,
-      photoUrl: data.photo_url,
+      photoUrl: sanitizePhotoUrl(data.photo_url),
       building: data.building,
       floor: data.floor,
       capacity: data.capacity,

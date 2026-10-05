@@ -201,7 +201,7 @@ export const MOCK_ROOMS: Room[] = [
   {
     id: 'room-v-301',
     name: 'V301 - VR / Multimedia Studio',
-    photoUrl: 'https://images.unsplash.com/photo-1534972195531-a756b1126f24?w=800&q=80',
+    photoUrl: 'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&q=80',
     building: 'V',
     floor: 3,
     capacity: 12,

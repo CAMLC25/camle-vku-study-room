@@ -60,7 +60,7 @@ VALUES
     ('d0000000-0000-0000-0000-000000000102', 'V102 - Agile Sprint Room', 'https://images.unsplash.com/photo-1531497865144-0464ef8fb9a9?w=800&q=80', 'V', 1, 8, true),
     ('d0000000-0000-0000-0000-000000000201', 'V201 - Cross-Platform Lab', 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80', 'V', 2, 15, true),
     ('d0000000-0000-0000-0000-000000000202', 'V202 - Design Sprint Pod', 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&q=80', 'V', 2, 4, true),
-    ('d0000000-0000-0000-0000-000000000301', 'V301 - VR / Multimedia Studio', 'https://images.unsplash.com/photo-1534972195531-a756b1126f24?w=800&q=80', 'V', 3, 12, true)
+    ('d0000000-0000-0000-0000-000000000301', 'V301 - VR / Multimedia Studio', 'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&q=80', 'V', 3, 12, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 5. Link Room Equipment

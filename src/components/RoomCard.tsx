@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import { useTranslation } from '../store/useLanguageStore';
 import { colors, layout, spacing, typography, shadows } from '../theme/theme';
 
 export const ROOM_CARD_HEIGHT = 138;
+
+const DEFAULT_ROOM_PHOTO =
+  'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&q=80';
 
 interface RoomCardProps {
   room: Room;
@@ -32,6 +35,11 @@ const getEquipmentIcon = (eq: string): string => {
 export const RoomCard = React.memo<RoomCardProps>(
   ({ room, onPress, isAvailableNow = true }) => {
     const { t } = useTranslation();
+    const [imgUri, setImgUri] = useState<string>(room.photoUrl || DEFAULT_ROOM_PHOTO);
+
+    useEffect(() => {
+      setImgUri(room.photoUrl || DEFAULT_ROOM_PHOTO);
+    }, [room.photoUrl]);
 
     return (
       <TouchableOpacity
@@ -44,11 +52,16 @@ export const RoomCard = React.memo<RoomCardProps>(
       >
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: room.photoUrl }}
+            source={{ uri: imgUri }}
             style={styles.image}
             contentFit="cover"
             transition={200}
             cachePolicy="disk"
+            onError={() => {
+              if (imgUri !== DEFAULT_ROOM_PHOTO) {
+                setImgUri(DEFAULT_ROOM_PHOTO);
+              }
+            }}
           />
           <View style={styles.capacityOverlay}>
             <Text style={styles.capacityOverlayText}>
