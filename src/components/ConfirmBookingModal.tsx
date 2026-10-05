@@ -58,10 +58,12 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdRef = useRef<BookingHold | null>(null);
+  const isCancelledRef = useRef<boolean>(false);
   const slotDef = TIME_SLOT_DEFINITIONS[slotIndex];
 
   // 1. Initial Hold Creation & Quota Fetch
   const initiateHold = useCallback(async () => {
+    isCancelledRef.current = false;
     setIsHolding(true);
     setDomainError(null);
     setSecondsRemaining(MAX_HOLD_SECONDS);
@@ -72,6 +74,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
         studentId,
         bookingDate
       );
+      if (isCancelledRef.current) return;
       setQuota(currentQuota);
 
       // Create 90-second soft hold
@@ -81,6 +84,14 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
         slotIndex,
         studentId
       );
+
+      // If user closed modal while hold request was in flight, immediately release it!
+      if (isCancelledRef.current) {
+        if (holdRes.success && holdRes.hold) {
+          bookingService.releaseHold(holdRes.hold.id).catch(() => {});
+        }
+        return;
+      }
 
       if (!holdRes.success) {
         setDomainError(mapErrorToDomain(holdRes.error));
@@ -93,16 +104,20 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
       holdRef.current = activeHold;
       setIsHolding(false);
     } catch (err: any) {
-      setDomainError(mapErrorToDomain(err));
-      setIsHolding(false);
+      if (!isCancelledRef.current) {
+        setDomainError(mapErrorToDomain(err));
+        setIsHolding(false);
+      }
     }
   }, [room.id, bookingDate, slotIndex, studentId]);
 
   // 2. Countdown Timer
   useEffect(() => {
     if (visible) {
+      isCancelledRef.current = false;
       initiateHold();
     } else {
+      isCancelledRef.current = true;
       if (timerRef.current) clearInterval(timerRef.current);
       if (holdRef.current) {
         bookingService.releaseHold(holdRef.current.id).catch(() => {});
@@ -113,6 +128,7 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
     }
 
     return () => {
+      isCancelledRef.current = true;
       if (timerRef.current) clearInterval(timerRef.current);
       if (holdRef.current) {
         bookingService.releaseHold(holdRef.current.id).catch(() => {});
@@ -139,15 +155,15 @@ export const ConfirmBookingModal: React.FC<ConfirmBookingModalProps> = ({
     };
   }, [hold, secondsRemaining]);
 
-  // 3. Clean release hold on dismiss
-  const handleDismiss = useCallback(async () => {
+  // 3. Clean release hold on dismiss (Instant UI response, fire-and-forget release)
+  const handleDismiss = useCallback(() => {
+    isCancelledRef.current = true;
+    if (timerRef.current) clearInterval(timerRef.current);
     const currentHold = hold || holdRef.current;
     if (currentHold) {
-      try {
-        await bookingService.releaseHold(currentHold.id);
-      } catch (e) {
+      bookingService.releaseHold(currentHold.id).catch((e) => {
         console.warn('Failed to release hold on modal dismiss', e);
-      }
+      });
     }
     holdRef.current = null;
     setHold(null);

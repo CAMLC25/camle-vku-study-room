@@ -40,9 +40,10 @@ export class SupabaseBookingService implements IBookingService {
     // 2. Fetch active unexpired holds
     const { data: holdRows, error: holdErr } = await supabase
       .from('booking_holds')
-      .select('id, slot_index, student_id, expires_at')
+      .select('id, slot_index, student_id, expires_at, status')
       .eq('room_id', roomId)
       .eq('booking_date', date)
+      .eq('status', 'active')
       .gt('expires_at', nowIso);
 
     if (holdErr) {
@@ -72,7 +73,7 @@ export class SupabaseBookingService implements IBookingService {
       if (h) {
         slots[idx] = {
           slotIndex: idx,
-          state: h.student_id === validStudentId ? 'AVAILABLE' : 'HELD_BY_OTHER',
+          state: 'HELD_BY_OTHER',
           holdExpiresAt: h.expires_at,
         };
       }
@@ -121,17 +122,21 @@ export class SupabaseBookingService implements IBookingService {
   }
 
   async releaseHold(holdId: string): Promise<void> {
+    if (!holdId) return;
     try {
+      // 1. Mark as expired with past expires_at (fires UPDATE event with room_id for Realtime)
       await supabase
         .from('booking_holds')
         .update({
           status: 'expired',
-          expires_at: new Date(Date.now() - 1000).toISOString(),
+          expires_at: new Date(Date.now() - 10000).toISOString(),
         })
         .eq('id', holdId);
+
+      // 2. Remove row from table
       await supabase.from('booking_holds').delete().eq('id', holdId);
     } catch (err) {
-      console.warn('Failed to release hold:', err);
+      console.warn('[SupabaseBookingService] Failed to release hold:', err);
     }
   }
 

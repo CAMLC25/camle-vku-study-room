@@ -3,7 +3,12 @@ import { SlotIndex } from '../types/slot';
 
 export type MainTabParamList = {
   Rooms: undefined;
-  MyBookings: undefined;
+  MyBookings:
+    | {
+        viewPassBookingId?: string;
+        viewSlotMatch?: { roomId: string; date: string; slotIndex: number };
+      }
+    | undefined;
   Profile: undefined;
 };
 

@@ -74,12 +74,18 @@ export class SupabaseRealtimeService implements IRealtimeService {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[SupabaseRealtime] Subscribed successfully to channel: ${channelKey}`);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn(`[SupabaseRealtime] Channel ${channelKey} ${status}:`, err);
+        }
+      });
 
     this.channels.set(channelKey, channel);
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channel).catch(() => {});
       this.channels.delete(channelKey);
     };
   }

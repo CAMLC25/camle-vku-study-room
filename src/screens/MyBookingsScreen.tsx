@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -38,7 +38,7 @@ type Props = CompositeScreenProps<
 
 type FilterTab = 'ALL' | 'ACTIVE' | 'PENDING' | 'CONFLICTED' | 'CANCELLED';
 
-export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
+export const MyBookingsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t, language } = useTranslation();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
@@ -48,6 +48,38 @@ export const MyBookingsScreen: React.FC<Props> = ({ navigation }) => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const myBookings = useBookingStore((state) => state.myBookings);
+
+  // Automatically open QR Check-in Pass Modal when navigated with booking parameters
+  useEffect(() => {
+    const viewPassBookingId = route.params?.viewPassBookingId;
+    const viewSlotMatch = route.params?.viewSlotMatch;
+
+    if (!viewPassBookingId && !viewSlotMatch) return;
+
+    let target: Booking | undefined;
+    if (viewPassBookingId) {
+      target = myBookings.find((b) => b.id === viewPassBookingId);
+    }
+    if (!target && viewSlotMatch) {
+      target = myBookings.find(
+        (b) =>
+          b.roomId === viewSlotMatch.roomId &&
+          b.bookingDate === viewSlotMatch.date &&
+          b.slotIndex === viewSlotMatch.slotIndex &&
+          b.status !== 'CANCELLED'
+      );
+    }
+
+    if (target) {
+      if (target.status === 'CONFIRMED') {
+        setActiveTab((prev) =>
+          prev === 'PENDING' || prev === 'CONFLICTED' || prev === 'CANCELLED' ? 'ACTIVE' : prev
+        );
+        setPassBooking(target);
+      }
+      navigation.setParams({ viewPassBookingId: undefined, viewSlotMatch: undefined });
+    }
+  }, [route.params?.viewPassBookingId, route.params?.viewSlotMatch, myBookings, navigation]);
   const currentStudentId = useBookingStore((state) => state.currentStudentId);
   const updateBooking = useBookingStore((state) => state.updateBooking);
   const setMyBookings = useBookingStore((state) => state.setMyBookings);

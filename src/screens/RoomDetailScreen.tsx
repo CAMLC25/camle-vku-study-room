@@ -49,6 +49,7 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const addBooking = useBookingStore((state) => state.addBooking);
   const updateBooking = useBookingStore((state) => state.updateBooking);
   const setQuotaUsage = useBookingStore((state) => state.setQuotaUsage);
+  const myBookings = useBookingStore((state) => state.myBookings);
 
   // Scoped Realtime availability hook
   const {
@@ -67,6 +68,14 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       if (slot && slot.state === 'AVAILABLE') {
         setModalSlotIndex(slotIndex);
       } else if (slot && slot.state === 'MINE') {
+        const myBooking = myBookings.find(
+          (b) =>
+            b.roomId === roomId &&
+            b.bookingDate === selectedDate &&
+            b.slotIndex === slotIndex &&
+            b.status !== 'CANCELLED'
+        );
+
         showConfirmDialog({
           title: t('yourReservationTitle'),
           message: `${t('yourReservationMsg')}\n${room?.name ? `${language === 'vi' ? 'Phòng' : 'Room'}: ${room.name}\n` : ''}${t('slotPrefix')} ${slotIndex + 1} (${TIME_SLOT_DEFINITIONS[slotIndex].label}) - ${formatDisplayDate(selectedDate)}`,
@@ -74,7 +83,14 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           isDestructive: false,
           confirmText: t('viewInMyBookings'),
           cancelText: t('close'),
-          onConfirm: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
+          onConfirm: () =>
+            navigation.navigate('MainTabs', {
+              screen: 'MyBookings',
+              params: {
+                viewPassBookingId: myBooking?.id,
+                viewSlotMatch: { roomId, date: selectedDate, slotIndex },
+              },
+            }),
           onCancel: () => {},
         });
       } else if (slot && slot.state === 'HELD_BY_OTHER') {
@@ -84,7 +100,7 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         );
       }
     },
-    [slots, selectedDate, t, room, language, navigation]
+    [slots, selectedDate, t, room, language, navigation, myBookings, roomId]
   );
 
   const handleBookingSuccess = useCallback(
@@ -132,7 +148,11 @@ export const RoomDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         message: `${language === 'vi' ? 'Phòng' : 'Room'}: ${booking.roomName}\n${t('bookingDate')}: ${formatDisplayDate(booking.bookingDate)}\n${t('bookingTime')}: ${TIME_SLOT_DEFINITIONS[booking.slotIndex].label}`,
         confirmText: t('viewInMyBookings'),
         cancelText: t('close'),
-        onConfirm: () => navigation.navigate('MainTabs', { screen: 'MyBookings' }),
+        onConfirm: () =>
+          navigation.navigate('MainTabs', {
+            screen: 'MyBookings',
+            params: { viewPassBookingId: booking.id },
+          }),
       });
     },
     [addBooking, updateBooking, currentStudentId, selectedDate, setQuotaUsage, refresh, navigation, t, language]

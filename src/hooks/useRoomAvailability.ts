@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { AppState } from 'react-native';
 import { useBookingStore } from '../store/useBookingStore';
 import { bookingService } from '../services/bookingService';
 import { realtimeService } from '../services/realtimeService';
@@ -76,9 +77,17 @@ export function useRoomAvailability(roomId: string, date: string) {
       }
     );
 
+    // 3. Refresh on AppState transition to active (e.g. phone unlocks or returns from background)
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        fetchFreshAvailability();
+      }
+    });
+
     return () => {
       isMounted.current = false;
       unsubscribe();
+      appStateSub.remove();
     };
   }, [roomId, date, fetchFreshAvailability]);
 
