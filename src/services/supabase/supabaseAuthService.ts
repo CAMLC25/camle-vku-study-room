@@ -53,6 +53,15 @@ class SupabaseAuthService implements IAuthService {
             error: 'Email này đã được đăng ký tài khoản trong hệ thống VKU.',
           };
         }
+
+        if (error.message.toLowerCase().includes('rate limit')) {
+          return {
+            success: false,
+            error:
+              'Hệ thống gửi email của máy chủ đang bị giới hạn tần suất (tối đa vài email/giờ trên gói dùng thử). Vui lòng đợi một lát hoặc xác nhận tài khoản trong Supabase Dashboard -> Users.',
+          };
+        }
+
         return {
           success: false,
           error: error.message,
