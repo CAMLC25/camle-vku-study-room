@@ -1,7 +1,7 @@
 # MINI-PROJECT SHORT TECHNICAL REPORT
 **Course:** Cross-Platform Mobile App Development (VKU)  
 **Mini-Project Title:** Mini-Project 2: Real-time Study Room Booking App (React Native & Expo)  
-**Team / Student Name:** Lê Cẩm (CAMLC25)  
+**Team / Student Name:** Lê Cảm (CAMLC25)  
 **Submission Date:** 05/10/2026  
 
 ---
@@ -18,7 +18,7 @@
 ## 2. FEATURE IMPLEMENTATION CHECKLIST
 | # | Required Feature | Status | Implementation Details & Acceptance Level |
 |:---:|---|:---:|---|
-| 1 | **Responsive Viewport & Safe Area** | ✅ Complete | Custom hook `useResponsiveLayout` adapts across Mobile (1 col), Tablet (2 cols), and Desktop (3 cols). Full dynamic inset handling via `react-native-safe-area-context`. |
+| 1 | **Responsive Viewport & Safe Area** | ✅ Complete | Custom hook `useResponsiveLayout` adapts across Mobile (1 col) and Desktop/Tablet (2 cols) with `Math.min(width, 1140)` width clamping and `flex: 1` columns preventing offscreen clipping. Full dynamic inset handling via `react-native-safe-area-context`. |
 | 2 | **Server State & Caching (TanStack Query)** | ✅ Complete | Integrated `@tanstack/react-query` with `QueryClientProvider` (`staleTime: 5min`, `gcTime: 10min`). Custom hook `useRooms()` with pull-to-refresh on `FlatList`. |
 | 3 | **Client State & Persistence (Zustand)** | ✅ Complete | Zustand store with `persist` middleware storing in `@react-native-async-storage/async-storage` under key `'vku-booking-storage'`. |
 | 4 | **Type-Safe Navigation (React Navigation 7)** | ✅ Complete | Nested Stack + Bottom Tabs architecture (`RootNavigator` + `MainTabs`) with strict TypeScript types (`RootStackParamList`, `MainTabParamList`). |
@@ -29,7 +29,7 @@
 | 9 | **Offline Outbox & Conflict Resolution** | ✅ Complete | Offline booking requests are queued in an outbox (`PENDING_SYNC`) and flushed sequentially upon network reconnection with deterministic conflict handling. |
 | 10 | **QR Check-in Pass & Local Notifications** | ✅ Complete | Interactive check-in pass powered by `react-native-qrcode-svg`; scheduled 15-minute countdown reminders via `expo-notifications`. |
 | 11 | **Layout Animations (Reanimated 3/4)** | ✅ Complete | Staggered entrance animations on room feed using `FadeInDown.delay(index * 60).springify()` and spring physics on interactions. |
-| 12 | **Student Auth & Google SSO (OAuth 2.0)** | ✅ Complete | Full authentication with real email/password via Supabase Auth (`auth.users`), direct Google SSO (`accounts.google.com`), interactive account chooser, and 1-tap evaluator demo accounts. |
+| 12 | **Student Auth, Email Verification & Profile Sync** | ✅ Complete | Full authentication with real email/password via Supabase Auth (`auth.users`), custom Gmail SMTP Relay bypassing free-tier rate limits, mandatory email confirmation with 1-tap deep link auto-login (`#access_token`), and PostgreSQL trigger on `auth.users` syncing to `public.students`. |
 
 ---
 
@@ -48,8 +48,8 @@ vku-study-room/
 │   ├── i18n/                   # Multi-language dictionary (Vietnamese & English)
 │   ├── navigation/             # Type-safe navigators (RootNavigator, MainTabs, types.ts)
 │   ├── providers/              # TanStack QueryClientProvider configuration
-│   ├── screens/                # Core screens (RoomListScreen, RoomDetailScreen, MyBookingsScreen, ProfileScreen)
-│   ├── services/               # Abstraction layer (Supabase, Mock, Outbox Sync, Notifications)
+│   ├── screens/                # Core screens (RoomListScreen, RoomDetailScreen, MyBookingsScreen, ProfileScreen, LoginScreen, RegisterScreen)
+│   ├── services/               # Abstraction layer (Supabase, Mock, Outbox Sync, Notifications, Auth)
 │   ├── store/                  # Zustand stores (useBookingStore with persist, useAuthStore, useLanguageStore)
 │   ├── theme/                  # Design tokens, typography, and VKU color palettes
 │   └── types/                  # Strict TypeScript domain interfaces
@@ -89,6 +89,7 @@ The project strictly separates **Client State** from **Server State** (following
 1. **Room Discovery & Multi-Parameter Filter (`RoomListScreen`):**
    * Displays 20 study rooms across Buildings A, B, C, and V in an adaptive 60 FPS grid.
    * Features real-time filtering chips by building, seat capacity (2–20), and equipment tags with smooth staggered entry animations (`FadeInDown.springify()`).
+   * Dynamic column calculation with 1140px max-width clamping ensures zero cut-off cards on desktop viewports.
 2. **Interactive Time-Slot Selector & 90s Countdown Modal (`RoomDetailScreen`):**
    * Features a 7-day rolling calendar with 4 discrete two-hour slots per day.
    * Selecting an available slot initiates a 90-second soft hold with a synchronized countdown timer, broadcasting `HELD_BY_OTHER` amber badges across all connected devices.
@@ -97,6 +98,9 @@ The project strictly separates **Client State** from **Server State** (following
    * Displays local outbox queue status during offline mode and automatically resolves conflicts with optimistic feedback.
 4. **Digital QR Booking Pass (`Check-in Modal`):**
    * Generates a high-contrast, cryptographically clean QR code encoding the unique booking token for campus security check-in.
+5. **Modern Minimalist Authentication (`LoginScreen` & `RegisterScreen`):**
+   * Streamlined, distraction-free authentication interface enforcing valid email credentials.
+   * Seamless handling of email confirmation tokens via Supabase Auth deep links.
 
 ---
 
@@ -114,3 +118,16 @@ The project strictly separates **Client State** from **Server State** (following
   * Offline bookings are created with state `PENDING_SYNC` and queued in FIFO order.
   * When `NetInfo` detects reconnection, the engine sequentially flushes outbox items against the server.
   * If the slot was taken while offline, the booking is transitioned deterministically to `CONFLICTED` with human-readable error diagnostics, avoiding silent data corruption.
+
+### 5.3 Challenge 3: Full Lifecycle Authentication, Email Confirmation & Identity Synchronization
+* **Problem:**
+  1. In Supabase Auth, when email confirmation is enforced, newly registered accounts are isolated in `auth.users` until verified. Attempting to book rooms before synchronization resulted in foreign-key rejection (`Student account not found`).
+  2. Supabase Free Tier built-in email service enforces a strict limit of 2 emails/hour (`email rate limit exceeded`) and redirects confirmation links to default `localhost:3000`.
+* **Resolution:**
+  1. **Database-level Synchronization**: Created a PostgreSQL `SECURITY DEFINER` trigger `handle_new_user()` executing on `AFTER INSERT ON auth.users`, atomically provisioning matching rows in `public.students` immediately upon sign-up.
+  2. **Custom SMTP Relay**: Configured a production Gmail SMTP gateway (using App Password and TLS port 587/465), bypassing free-tier rate limits and supporting high-throughput student verification emails.
+  3. **Seamless Confirmation Flow**: Passed dynamic `emailRedirectTo: window.location.origin` in `signUp()`, paired with `detectSessionInUrl: isWeb` and `supabase.auth.onAuthStateChange` to automatically log users in directly to the main room catalog upon clicking the email link.
+
+### 5.4 Challenge 4: Desktop Wide-Screen Grid Layout Clipping
+* **Problem:** On wide desktop monitors (1920px+), card widths computed from raw `window.width` exceeded the centered container's `maxWidth: 1140px`, causing the second column of cards to be clipped offscreen.
+* **Resolution:** Re-engineered `useResponsiveLayout` to clamp the layout calculation using `effectiveWidth = Math.min(width, 1140)`. In `RoomListScreen`, applied `flex: 1` and `maxWidth: cardWidth` to card containers, guaranteeing perfectly balanced 2-column rows that never overflow.

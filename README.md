@@ -24,19 +24,21 @@
 
 The **VKU Real-time Study Room Booking App** is an academic cross-platform mobile application engineered for students of Vietnam - Korea University of Information and Communication Technology (VKU) to discover, reserve, manage, and check in to campus study rooms and computer labs.
 
-Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum (Week 5 & Week 6)**, the application combines modern **React Navigation 7** type-safe navigation, dual **Zustand + TanStack Query** state management, **React Native Reanimated 3/4** layout animations, and an enterprise-grade **PostgreSQL Concurrency Engine**.
+Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum (Week 5 & Week 6)**, the application combines modern **React Navigation 7** type-safe navigation, dual **Zustand + TanStack Query** state management, **React Native Reanimated** layout animations, and an enterprise-grade **PostgreSQL Concurrency Engine**.
 
 ### Key Architectural Highlights
 * **20 Campus Study Rooms & Labs**: Pre-seeded across Buildings A (Academic), B (Technology), C (Library), and V (VKU Friendship Innovation Tower).
 * **7-Day Rolling Horizon**: 4 discrete 2-hour daily sessions (07:30–09:30, 09:30–11:30, 13:00–15:00, 15:00–17:00).
 * **Server State & Caching via TanStack Query**: Automatic 5-minute background caching (`staleTime`), garbage collection (`gcTime`), and pull-to-refresh FlatList.
 * **Client State & Session via Zustand**: Persistent offline store in `@react-native-async-storage/async-storage` (`vku-booking-storage`).
+* **Production Authentication & Email Verification**: Strict Email/Password registration powered by **Supabase Auth** with automated transactional email verification via **Gmail SMTP Gateway** and instant deep link session activation (`#access_token`).
+* **Automated Identity Synchronization**: Superuser PostgreSQL database trigger on `auth.users` synchronizing new registrations directly to `public.students` domain tables.
 * **90-Second Soft Holds**: Holds reserved slots temporarily during checkout, automatically freeing them if abandoned or cancelled without blocking the UI.
 * **Server-Authoritative Concurrency**: Serialization via PostgreSQL transaction-level advisory locks + partial unique index `idx_bookings_active_slot`.
 * **Offline Outbox Engine**: Sequential mutation flusher preserving causality; offline bookings are queued as `PENDING_SYNC` and never falsely confirmed locally.
 * **15-Minute Local Reminders**: Scheduled notifications via `expo-notifications` for confirmed bookings.
 * **QR Booking Pass**: Secure check-in pass powered by `react-native-qrcode-svg` strictly embedding the booking UUID.
-* **60 FPS FlatList Performance**: Staggered spring animations via `FadeInDown.springify()`, `React.memo`, `getItemLayout`, and `expo-image` disk caching.
+* **60 FPS FlatList Performance & Wide-Screen Responsive Grid**: Adaptive 2-column layout with container max-width clamping (`effectiveWidth = Math.min(width, 1140)`), preventing card clipping on ultra-wide desktop displays.
 
 ---
 
@@ -44,11 +46,12 @@ Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum 
 
 | # | Feature Area | Weight | Status | Implementation Details |
 |:---:|---|:---:|:---:|---|
-| 1 | **UI/UX & Animations** | 25% | ✅ Complete | Polished design system, adaptive columns via `useResponsiveLayout`, and staggered card entrance animations using `FadeInDown.delay(index * 60).springify()`. |
+| 1 | **UI/UX & Animations** | 25% | ✅ Complete | Polished design system, adaptive columns via `useResponsiveLayout` (clamped to 1140px, 0% clipping), minimalist auth forms, and staggered card entrance animations using `FadeInDown.delay(index * 60).springify()`. |
 | 2 | **Core Features** | 30% | ✅ Complete | Instant search, multi-parameter filter chips (Building, Capacity, Equipment), 7-day slot selector, 90s countdown modal, and QR check-in pass. |
 | 3 | **Navigation Architecture** | 15% | ✅ Complete | Root Stack nesting Main Bottom Tabs (`BrowseRooms`, `MyBookings`, `Profile`). Full TypeScript type safety via `RootStackParamList` and `MainTabParamList`. |
 | 4 | **State Management** | 15% | ✅ Complete | **Zustand + TanStack Query**: Client state in `useBookingStore` with `AsyncStorage` persistence; Server state cached via `QueryClientProvider` and `useRooms()`. |
-| 5 | **Code Quality & Testing** | 15% | ✅ Complete | Strict TypeScript (0 errors on `npx tsc --noEmit`), modular custom hooks, and 4 automated test suites passing 100% (`npm test`). |
+| 5 | **Authentication & Security** | 15% | ✅ Complete | Supabase Auth with custom transactional SMTP, mandatory email confirmation link with auto-login (`detectSessionInUrl`), and DB trigger on `auth.users` $\rightarrow$ `public.students`. |
+| 6 | **Code Quality & Testing** | 15% | ✅ Complete | Strict TypeScript (0 errors on `npx tsc --noEmit`), modular custom hooks, and 4 automated test suites passing 100% (`npm test`). |
 
 ---
 
@@ -61,7 +64,7 @@ Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum 
 | **Navigation** | React Navigation 7 (Stack + Tabs) | Native-stack and bottom tabs routing |
 | **Server State** | TanStack Query 5 (`@tanstack/react-query`) | API caching, stale-while-revalidate & refetch |
 | **Client State** | Zustand 5 + `persist` middleware | Volatile UI state, active holds & session |
-| **Authentication** | Supabase Auth + Google OAuth 2.0 | Real email registration, JWT session, Google SSO |
+| **Authentication** | Supabase Auth + Gmail SMTP Relay | Real email registration, JWT session, email verification |
 | **Local Storage** | `@react-native-async-storage/async-storage` | Offline state persistence (`vku-booking-storage`) |
 | **Animations** | React Native Reanimated (`react-native-reanimated`) | 60/120 FPS UI-thread layout & spring animations |
 | **Backend / DB** | Supabase (PostgreSQL 15+) | RLS, Advisory Locking & Realtime channels |
@@ -84,18 +87,43 @@ npm test
 # 3. Start Expo development server
 npx expo start
 ```
-* Press `w` to open the web version in your browser.
+* Press `w` to open the web version in your browser (`http://localhost:8081`).
 * Scan the terminal QR code with the **Expo Go** mobile app on Android or iOS.
 
 ### Running with Supabase Backend (Production Mode)
 1. In your Supabase SQL Editor, execute [`supabase/schema.sql`](supabase/schema.sql), followed by [`supabase/seed.sql`](supabase/seed.sql).
-2. Configure `.env` in the root directory:
+2. Execute the user synchronization trigger:
+   ```sql
+   CREATE OR REPLACE FUNCTION public.handle_new_user()
+   RETURNS TRIGGER AS $$
+   BEGIN
+     INSERT INTO public.students (id, email, full_name, student_id_code)
+     VALUES (
+       NEW.id,
+       NEW.email,
+       COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+       COALESCE(NEW.raw_user_meta_data->>'student_code', UPPER(split_part(NEW.email, '@', 1)))
+     )
+     ON CONFLICT (id) DO UPDATE SET
+       email = EXCLUDED.email,
+       full_name = EXCLUDED.full_name,
+       student_id_code = EXCLUDED.student_id_code;
+     RETURN NEW;
+   END;
+   $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+   DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+   CREATE TRIGGER on_auth_user_created
+     AFTER INSERT ON auth.users
+     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+   ```
+3. Configure `.env` in the root directory:
    ```env
    EXPO_PUBLIC_APP_DATA_MODE=supabase
    EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    ```
-3. Start Expo with cache cleared: `npx expo start -c`
+4. Start Expo with cache cleared: `npx expo start -c`
 
 ---
 
@@ -111,14 +139,14 @@ npm test
 1. `npm run test:concurrency`: Simulates simultaneous slot booking race conditions, idempotency key replay attacks, daily quota enforcement (max 2 slots/day), and soft hold release.
 2. `npm run test:outbox`: Simulates offline reservation queuing, sequential background synchronization, and conflict marking.
 3. `npm run test:notifications`: Validates 15-minute reminder calculation triggers and QR booking pass token purity.
-4. `npm run test:auth`: Validates authentication sessions, demo student switching, and credential validation.
+4. `npm run test:auth`: Validates authentication sessions, demo student switching, credential validation, and Google SSO flows.
 
 ---
 
 ## 6. Detailed Technical Documentation
 
 Further in-depth technical documentation can be found in the [`docs/`](docs/) directory:
-* [**Mini-Project Technical Report (PDF Template)**](docs/REPORT.md)
+* [**Mini-Project Technical Report (`docs/REPORT.md`)**](docs/REPORT.md)
 * [**System Architecture (`docs/architecture.md`)**](docs/architecture.md)
 * [**Concurrency Strategy (`docs/concurrency.md`)**](docs/concurrency.md)
 * [**Offline Outbox Engine (`docs/offline-outbox.md`)**](docs/offline-outbox.md)
