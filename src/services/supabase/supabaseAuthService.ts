@@ -321,14 +321,14 @@ class SupabaseAuthService implements IAuthService {
     } catch (err: any) {
       console.warn('[SupabaseAuthService] signOut error:', err?.message);
     }
-    return await mockAuthService.signOut();
+    return { success: true };
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
     try {
       const { data } = await supabase.auth.getSession();
       if (!data?.session?.user) {
-        return await mockAuthService.getCurrentUser();
+        return null;
       }
 
       const user = data.session.user;
@@ -343,7 +343,7 @@ class SupabaseAuthService implements IAuthService {
         role: 'student',
       };
     } catch {
-      return await mockAuthService.getCurrentUser();
+      return null;
     }
   }
 
@@ -351,7 +351,7 @@ class SupabaseAuthService implements IAuthService {
     try {
       const { data } = await supabase.auth.getSession();
       if (!data?.session) {
-        return await mockAuthService.getSession();
+        return null;
       }
 
       const user = await this.getCurrentUser();
@@ -364,7 +364,7 @@ class SupabaseAuthService implements IAuthService {
         user,
       };
     } catch {
-      return await mockAuthService.getSession();
+      return null;
     }
   }
 

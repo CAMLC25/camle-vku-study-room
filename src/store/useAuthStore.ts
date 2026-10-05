@@ -95,6 +95,9 @@ export const useAuthStore = create<AuthState>()(
                 name: newUser.fullName,
                 code: newUser.studentCode,
               });
+              if (typeof window !== 'undefined' && window.location.hash) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+              }
             }
           });
 
@@ -234,6 +237,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
+          if (typeof window !== 'undefined' && window.location.hash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
           await useBookingStore.getState().clearAllStorageAndReset();
         }
       },
