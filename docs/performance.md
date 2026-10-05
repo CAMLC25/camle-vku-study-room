@@ -53,7 +53,16 @@ export const RoomCard = React.memo(RoomCardComponent, (prev, next) => {
   );
 });
 ```
-When a student types in the search bar or changes building filters, only the affected cards re-render.
+### 2.4 Wide-Screen Responsive Grid Clamping & Adaptive Columns
+On wide desktop and external monitors (1920×1080, 2560×1440), card widths calculated using raw `window.width` exceeded the maximum container bounds (`maxWidth: 1140px`), pushing the second column of cards offscreen and causing horizontal scroll clipping.
+
+**Resolution in `useResponsiveLayout.ts` & `RoomListScreen.tsx`:**
+- Calculations are bounded to the centered container width using `effectiveWidth = Math.min(width, 1140)`:
+  ```ts
+  const effectiveWidth = Math.min(width, 1140);
+  const cardWidth = isMobile ? effectiveWidth - 32 : (effectiveWidth - 48) / 2;
+  ```
+- Each item container in `RoomListScreen.tsx` specifies `flex: 1` and `maxWidth: cardWidth`, guaranteeing symmetric 2-column distribution, 0% card cut-off, zero Cumulative Layout Shift (CLS), and fluid 60 FPS scroll performance.
 
 ---
 

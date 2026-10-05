@@ -1,6 +1,7 @@
 # VKU Real-time Study Room Booking App
 ### Cross-Platform Mobile Application Development (Mini-Project 2)
-**Vietnam - Korea University of Information and Communication Technology (VKU)**
+**Vietnam - Korea University of Information and Communication Technology (VKU)**  
+**Student:** Lê Cảm (CAMLC25) — Student ID: 21IT001
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Cloudflare_Workers-F38020.svg?logo=cloudflare)](https://camle-vku-study-room.lecam.workers.dev)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict_v6-blue.svg)](https://www.typescriptlang.org/)
@@ -32,6 +33,7 @@ Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum 
 * **Server State & Caching via TanStack Query**: Automatic 5-minute background caching (`staleTime`), garbage collection (`gcTime`), and pull-to-refresh FlatList.
 * **Client State & Session via Zustand**: Persistent offline store in `@react-native-async-storage/async-storage` (`vku-booking-storage`).
 * **Production Authentication & Email Verification**: Strict Email/Password registration powered by **Supabase Auth** with automated transactional email verification via **Gmail SMTP Gateway** and instant deep link session activation (`#access_token`).
+* **Anti-Abuse Rate Limiting & URL Hash Sanitization**: Sliding-window rate limit protection (30 requests/5 min sign-in, 20 token verifications/5 min), automated stripping of URL `#access_token` fragments via `window.history.replaceState` preventing refresh loops, and strict mock-isolation.
 * **Automated Identity Synchronization**: Superuser PostgreSQL database trigger on `auth.users` synchronizing new registrations directly to `public.students` domain tables.
 * **90-Second Soft Holds**: Holds reserved slots temporarily during checkout, automatically freeing them if abandoned or cancelled without blocking the UI.
 * **Server-Authoritative Concurrency**: Serialization via PostgreSQL transaction-level advisory locks + partial unique index `idx_bookings_active_slot`.

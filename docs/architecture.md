@@ -129,6 +129,17 @@ graph TD
 - **Custom SMTP Gateway Relay**: Configured with a dedicated Gmail SMTP relay (`smtp.gmail.com:587`), overcoming the Free Tier's 2 emails/h limit and ensuring reliable verification token dispatch.
 - **Deep-Link Auto-Activation**: Dynamic `emailRedirectTo: window.location.origin` paired with Supabase's `detectSessionInUrl: isWeb` reads hash tokens (`#access_token=...`) on arrival and automatically transitions users to the main application without requiring manual re-entry of passwords.
 
+### 3.7 Anti-Abuse Rate Limiting, Session Hygiene & URL Sanitization
+- **Three Tiered Rate-Limiting Boundaries**:
+  1. *Sign-in & Sign-up Throttling*: Supabase Auth automatically enforces a sliding-window rate limit of **30 requests per 5 minutes per IP address**. Rapid, repeated login attempts trigger standard HTTP 429 (`rate limit exceeded`).
+  2. *Token Verification Throttling*: Email confirmation token requests are capped at **20 requests per 5 minutes per IP address**, preventing brute-force token exhaustion.
+  3. *SMTP Relay Throughput*: The production Gmail SMTP relay allows up to **500 transactional emails per 24 hours**, eliminating the Supabase Free Tier ceiling (2 emails/hr) while establishing a hard boundary against email flooding.
+- **Strict Session Isolation & Zero Mock Leakage**:
+  - In `supabaseAuthService.ts`, all production auth operations are strictly isolated from mock services. Unverified emails (`email_not_confirmed`) or invalid credentials produce strict server errors without falling back to local mock evaluator accounts.
+- **URL Hash Sanitization & History State Cleaning**:
+  - When returning from an email verification link, Supabase deposits `#access_token=...` into the address bar.
+  - To prevent browser reloads from repeatedly re-detecting stale tokens or leaking sensitive credentials into browser history, `useAuthStore` executes `window.history.replaceState(null, '', window.location.pathname + window.location.search)` immediately upon session ingestion and on explicit user logout.
+
 ---
 
 ## 4. Directory & File Organization

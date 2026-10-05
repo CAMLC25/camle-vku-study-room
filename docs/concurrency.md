@@ -98,6 +98,13 @@ Inside the atomic stored procedure (and mirrored in the local mock engine), thre
 | **Weekly Quota** | Max 6 slots / week | `COUNT(*) WHERE booking_date BETWEEN (now - 3d) AND (now + 3d)` | `WEEKLY_QUOTA_EXCEEDED` |
 | **Active Future Limit** | Max 3 future slots | `COUNT(*) WHERE booking_date >= today` | `MAX_FUTURE_EXCEEDED` |
 
+### 3.1 Identity Synchronization & Foreign Key Integrity
+When a student registers via Supabase Auth, their credentials reside in `auth.users`. Because the booking stored procedure `book_slot()` enforces a relational foreign key referencing `public.students(id)`, an immediate booking attempt could fail if the student profile has not yet been provisioned.
+
+To guarantee zero race conditions during onboarding:
+- A PostgreSQL database trigger (`handle_new_user()`) executes on `AFTER INSERT ON auth.users` with `SECURITY DEFINER`.
+- The trigger atomically provisions a matching student row in `public.students` within the same transaction, guaranteeing that any subsequent booking request immediately resolves the student foreign key.
+
 ---
 
 ## 4. Verification Test Results (`npm run test:concurrency`)
