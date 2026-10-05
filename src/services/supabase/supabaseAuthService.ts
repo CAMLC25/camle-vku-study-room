@@ -24,11 +24,16 @@ class SupabaseAuthService implements IAuthService {
       const fullName = params.fullName.trim();
       const className = params.className?.trim() || 'VKU';
 
+      const emailRedirectTo = isWeb
+        ? window.location.origin
+        : 'https://camle-vku-study-room.lecam.workers.dev';
+
       // 1. Register with real Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password: params.password,
         options: {
+          emailRedirectTo,
           data: {
             full_name: fullName,
             student_code: studentCode,
