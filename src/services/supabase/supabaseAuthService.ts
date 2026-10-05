@@ -173,19 +173,28 @@ class SupabaseAuthService implements IAuthService {
       });
 
       if (error) {
-        // Specific user-friendly error translations
-        if (error.message.includes('Email not confirmed')) {
+        const errorMsgLower = (error.message || '').toLowerCase();
+        const errorCode = (error as any).code || '';
+
+        // 1. Strict check for unconfirmed email
+        if (
+          errorMsgLower.includes('confirm') ||
+          errorMsgLower.includes('not confirmed') ||
+          errorCode === 'email_not_confirmed'
+        ) {
           return {
             success: false,
             error:
-              'Tài khoản chưa được xác nhận email. Vui lòng kiểm tra hộp thư đến (hoặc thư rác) của bạn để bấm liên kết kích hoạt.',
+              'Tài khoản chưa được xác nhận email. Vui lòng kiểm tra hộp thư đến (hoặc thư rác) của bạn để bấm liên kết kích hoạt trước khi đăng nhập.',
           };
         }
 
-        // If credentials failed on Supabase, check if this is a pre-seeded evaluator demo account
-        const mockResult = await mockAuthService.signIn(params);
-        if (mockResult.success) {
-          return mockResult;
+        // 2. Rate limit
+        if (errorMsgLower.includes('rate limit')) {
+          return {
+            success: false,
+            error: 'Quá số lần đăng nhập cho phép. Vui lòng thử lại sau ít phút.',
+          };
         }
 
         return {
@@ -264,8 +273,11 @@ class SupabaseAuthService implements IAuthService {
         session: authSession,
       };
     } catch (err: any) {
-      console.warn('[SupabaseAuthService] signIn error, trying mock fallback:', err?.message);
-      return await mockAuthService.signIn(params);
+      console.warn('[SupabaseAuthService] signIn error:', err?.message);
+      return {
+        success: false,
+        error: 'Có lỗi xảy ra khi kết nối máy chủ xác thực. Vui lòng thử lại.',
+      };
     }
   }
 
