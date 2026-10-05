@@ -83,6 +83,18 @@ class SupabaseAuthService implements IAuthService {
           user: authUser,
         };
 
+        // Sync to public.students table
+        try {
+          await supabase.from('students').upsert({
+            id: authUser.id,
+            student_id_code: authUser.studentCode,
+            full_name: authUser.fullName,
+            email: authUser.email,
+          }, { onConflict: 'id' });
+        } catch (stErr) {
+          console.warn('[SupabaseAuthService] student upsert error:', stErr);
+        }
+
         return {
           success: true,
           user: authUser,
@@ -205,6 +217,18 @@ class SupabaseAuthService implements IAuthService {
         expiresAt: data.session.expires_at,
         user: authUser,
       };
+
+      // Sync to public.students table
+      try {
+        await supabase.from('students').upsert({
+          id: authUser.id,
+          student_id_code: authUser.studentCode,
+          full_name: authUser.fullName,
+          email: authUser.email,
+        }, { onConflict: 'id' });
+      } catch (stErr) {
+        console.warn('[SupabaseAuthService] student upsert error:', stErr);
+      }
 
       return {
         success: true,

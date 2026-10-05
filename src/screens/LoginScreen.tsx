@@ -67,22 +67,25 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeScreen
       edges={['top', 'bottom', 'left', 'right']}
-      backgroundColor={colors.surface}
-      statusBarStyle="dark"
+      backgroundColor="#0c4a6e"
+      statusBarStyle="light"
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Top Bar with Language Selector */}
-          <View style={styles.topBar}>
-            <View style={styles.vkuMiniBadge}>
-              <Text style={styles.vkuMiniText}>VKU SMART CAMPUS</Text>
+        {/* Top Header Bar with VKU Branding & Language Switcher */}
+        <View style={styles.topHeader}>
+          <View style={styles.topHeaderInner}>
+            <View style={styles.headerBrandCol}>
+              <View style={styles.vkuMiniBadge}>
+                <Text style={styles.vkuMiniText}>VKU SMART CAMPUS</Text>
+              </View>
+              <Text style={styles.vkuTitle}>
+                {language === 'vi'
+                  ? 'ĐẠI HỌC CNTT & TRUYỀN THÔNG VIỆT - HÀN'
+                  : 'VIETNAM - KOREA UNIVERSITY OF ICT'}
+              </Text>
             </View>
 
             <View style={styles.langPillWrapper}>
@@ -110,20 +113,30 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
 
-          {/* Header Title & Branding */}
-          <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconEmoji}>🏛️</Text>
-            </View>
-            <Text style={styles.title} accessibilityRole="header">
-              {t('loginTitle')}
-            </Text>
-            <Text style={styles.subtitle}>{t('loginSubtitle')}</Text>
-          </View>
-
-          {/* Form */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Main Card */}
           <View style={styles.formCard}>
+            {/* Header Title inside Card */}
+            <View style={styles.cardHeader}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.iconEmoji}>🏛️</Text>
+              </View>
+              <Text style={styles.title} accessibilityRole="header">
+                {t('loginTitle')}
+              </Text>
+              <Text style={styles.subtitle}>
+                {language === 'vi'
+                  ? 'Cổng thông tin mượn phòng học sinh viên VKU'
+                  : 'VKU Student Study Room Booking Portal'}
+              </Text>
+            </View>
+
             {/* Error Banner */}
             {displayError && (
               <View style={styles.errorBanner}>
@@ -144,8 +157,12 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     setEmail(text);
                     if (displayError) clearError();
                   }}
-                  placeholder={t('emailPlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholder={
+                    language === 'vi'
+                      ? 'Nhập Email hoặc Mã sinh viên (VD: 21IT001)'
+                      : 'Enter Email or Student ID (e.g. 21IT001)'
+                  }
+                  placeholderTextColor="#94a3b8"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -166,8 +183,10 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     setPassword(text);
                     if (displayError) clearError();
                   }}
-                  placeholder={t('passwordPlaceholder')}
-                  placeholderTextColor={colors.textLight}
+                  placeholder={
+                    language === 'vi' ? 'Nhập mật khẩu tài khoản' : 'Enter your password'
+                  }
+                  placeholderTextColor="#94a3b8"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   editable={!isLoading}
@@ -237,6 +256,30 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.switchAuthLink}>{t('registerNow')}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Campus Feature Highlights Inside Card */}
+            <View style={styles.featureHighlights}>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>⚡</Text>
+                <Text style={styles.featureText}>
+                  {language === 'vi' ? 'Giữ chỗ 90s tức thì' : 'Instant 90s Hold'}
+                </Text>
+              </View>
+              <View style={styles.featureDivider} />
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>🛡️</Text>
+                <Text style={styles.featureText}>
+                  {language === 'vi' ? 'Chuẩn hạn mức SV' : 'Standard Quotas'}
+                </Text>
+              </View>
+              <View style={styles.featureDivider} />
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>📱</Text>
+                <Text style={styles.featureText}>
+                  {language === 'vi' ? 'Thẻ mượn QR Code' : 'QR Check-in Pass'}
+                </Text>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -247,97 +290,133 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#f1f5f9',
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    maxWidth: 520,
+  topHeader: {
+    backgroundColor: '#0c4a6e',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  topHeaderInner: {
+    maxWidth: 1040,
     width: '100%',
     alignSelf: 'center',
-    justifyContent: 'center',
-  },
-  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+  },
+  headerBrandCol: {
+    flex: 1,
   },
   vkuMiniBadge: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: layout.radii.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
   },
   vkuMiniText: {
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.primaryDark,
-    letterSpacing: 0.5,
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#38bdf8',
+    letterSpacing: 0.8,
+  },
+  vkuTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#f8fafc',
+    letterSpacing: 0.4,
   },
   langPillWrapper: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: layout.radii.full,
-    padding: 2,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    padding: 3,
+    gap: 3,
   },
   langPillBtn: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: layout.radii.full,
+    borderRadius: 16,
   },
   langPillActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#ffffff',
   },
   langPillText: {
-    fontSize: 10,
-    fontWeight: typography.weights.bold,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#cbd5e1',
   },
   langPillTextActive: {
-    color: colors.textInverse,
+    color: '#0c4a6e',
   },
-  header: {
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.lg,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  cardHeader: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primaryLight,
-    borderWidth: 1.5,
-    borderColor: colors.borderHighlight,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#e0f2fe',
+    borderWidth: 2,
+    borderColor: '#bae6fd',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
     ...shadows.subtle,
   },
   iconEmoji: {
-    fontSize: 32,
+    fontSize: 34,
   },
   title: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.extrabold,
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 4,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: typography.sizes.xs,
-    color: colors.textMuted,
+    fontSize: 12,
+    color: '#64748b',
     textAlign: 'center',
-    maxWidth: 280,
+    maxWidth: 320,
+    lineHeight: 18,
   },
   formCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: layout.radii.xl,
+    backgroundColor: '#ffffff',
+    padding: 24,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.card,
+    borderColor: '#e2e8f0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow:
+          '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+      } as any,
+    }),
   },
   errorBanner: {
     flexDirection: 'row',
@@ -476,5 +555,33 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
     color: colors.primary,
+  },
+  featureHighlights: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  featureItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  featureIcon: {
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  featureText: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  featureDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#e2e8f0',
   },
 });

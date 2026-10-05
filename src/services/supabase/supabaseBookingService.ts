@@ -94,6 +94,23 @@ export class SupabaseBookingService implements IBookingService {
     studentId: string
   ): Promise<{ success: boolean; hold?: BookingHold; error?: string }> {
     const validStudentId = ensureStudentUuid(studentId);
+
+    // Auto-sync student to public.students table to ensure foreign key passes
+    try {
+      const { data: authData } = await supabase.auth.getSession();
+      const currentUser = authData?.session?.user;
+      if (currentUser && currentUser.id === validStudentId) {
+        await supabase.from('students').upsert({
+          id: validStudentId,
+          student_id_code: currentUser.user_metadata?.student_code || '21IT001',
+          full_name: currentUser.user_metadata?.full_name || 'Sinh viên VKU',
+          email: currentUser.email || 'student@vku.udn.vn',
+        }, { onConflict: 'id' });
+      }
+    } catch {
+      // Best-effort client upsert; stored procedure also handles auto-provisioning
+    }
+
     const { data, error } = await supabase.rpc('create_slot_hold', {
       p_room_id: roomId,
       p_booking_date: date,
@@ -142,6 +159,23 @@ export class SupabaseBookingService implements IBookingService {
 
   async bookSlot(request: BookingRequest): Promise<BookingResult> {
     const validStudentId = ensureStudentUuid(request.studentId);
+
+    // Auto-sync student to public.students table to ensure foreign key passes
+    try {
+      const { data: authData } = await supabase.auth.getSession();
+      const currentUser = authData?.session?.user;
+      if (currentUser && currentUser.id === validStudentId) {
+        await supabase.from('students').upsert({
+          id: validStudentId,
+          student_id_code: currentUser.user_metadata?.student_code || '21IT001',
+          full_name: currentUser.user_metadata?.full_name || 'Sinh viên VKU',
+          email: currentUser.email || 'student@vku.udn.vn',
+        }, { onConflict: 'id' });
+      }
+    } catch {
+      // Best-effort client upsert
+    }
+
     // Single PostgreSQL stored procedure transaction: book_slot()
     const { data, error } = await supabase.rpc('book_slot', {
       p_student_id: validStudentId,

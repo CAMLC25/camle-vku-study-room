@@ -82,8 +82,8 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeScreen
       edges={['top', 'bottom', 'left', 'right']}
-      backgroundColor={colors.surface}
-      statusBarStyle="dark"
+      backgroundColor="#0c4a6e"
+      statusBarStyle="light"
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
@@ -340,7 +340,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#f1f5f9',
   },
   scrollContent: {
     flexGrow: 1,
