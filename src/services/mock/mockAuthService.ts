@@ -309,6 +309,62 @@ class MockAuthService implements IAuthService {
     return { success: true, user: stored.user, session };
   }
 
+  async signInWithGoogle(email?: string): Promise<AuthResult> {
+    if (!this.isLoadedFromStorage) {
+      await this.loadFromStorage();
+    }
+
+    const targetEmail = (email || 'anv.21it@vku.udn.vn').trim().toLowerCase();
+
+    // Check if user already exists
+    let existing = this.users.find(
+      (u) => u.user.email.toLowerCase() === targetEmail
+    );
+
+    if (!existing) {
+      // Auto-provision student user from Google Account
+      const username = targetEmail.split('@')[0];
+      const codeMatch = username.match(/\d{2}[a-zA-Z]+\d+/);
+      const studentCode = codeMatch
+        ? codeMatch[0].toUpperCase()
+        : `21IT${Math.floor(100 + Math.random() * 899)}`;
+      const nameParts = username.replace(/[^a-zA-Z]/g, ' ').trim().split(/\s+/);
+      const fullName =
+        nameParts.length > 0 && nameParts[0].length > 0
+          ? nameParts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+          : 'Sinh Viên VKU';
+
+      const newUser: AuthUser = {
+        id: `00000000-0000-0000-0000-${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+        email: targetEmail,
+        studentCode,
+        fullName: fullName || 'Sinh Viên VKU',
+        className: '21IT1',
+        avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&q=80',
+        role: 'student',
+      };
+
+      existing = {
+        user: newUser,
+        passwordHash: 'google-oauth-sso',
+      };
+      this.users.push(existing);
+      await this.saveUsersToStorage();
+    }
+
+    const session: AuthSession = {
+      accessToken: `vku-google-jwt-${existing.user.id}-${Date.now()}`,
+      expiresAt: Date.now() + 14 * 24 * 3600 * 1000,
+      user: existing.user,
+    };
+
+    this.currentSession = session;
+    await this.saveSessionToStorage(session);
+    this.notify();
+
+    return { success: true, user: existing.user, session };
+  }
+
   async signOut(): Promise<{ success: boolean; error?: string }> {
     this.currentSession = null;
     await this.saveSessionToStorage(null);

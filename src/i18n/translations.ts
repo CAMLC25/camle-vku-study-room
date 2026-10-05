@@ -235,8 +235,6 @@ export const translations = {
     passwordPlaceholder: 'Nhập mật khẩu của bạn',
     noAccountPrompt: 'Chưa có tài khoản?',
     registerNow: 'Đăng ký ngay',
-    quickDemoAccounts: 'Tài khoản thử nghiệm nhanh',
-    quickLoginHint: 'Chạm để đăng nhập ngay tài khoản sinh viên mẫu:',
     registerTitle: 'Đăng ký tài khoản',
     registerSubtitle: 'Tạo tài khoản mượn phòng học sinh viên VKU',
     fullNameLabel: 'Họ và tên',
@@ -257,6 +255,8 @@ export const translations = {
     logoutBtn: 'Đăng xuất',
     logoutConfirmTitle: 'Xác nhận đăng xuất',
     logoutConfirmMsg: 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
+    loginWithGoogle: 'Tiếp tục với Google',
+    orDivider: 'HOẶC',
   },
 
   en: {
@@ -493,8 +493,6 @@ export const translations = {
     passwordPlaceholder: 'Enter your password',
     noAccountPrompt: "Don't have an account?",
     registerNow: 'Register now',
-    quickDemoAccounts: 'Quick Demo Accounts',
-    quickLoginHint: 'Tap to instantly sign in with sample student account:',
     registerTitle: 'Create Account',
     registerSubtitle: 'Register for VKU Study Room Booking',
     fullNameLabel: 'Full Name',
@@ -515,6 +513,8 @@ export const translations = {
     logoutBtn: 'Sign Out',
     logoutConfirmTitle: 'Sign Out Confirmation',
     logoutConfirmMsg: 'Are you sure you want to sign out of the application?',
+    loginWithGoogle: 'Continue with Google',
+    orDivider: 'OR',
   },
 };
 

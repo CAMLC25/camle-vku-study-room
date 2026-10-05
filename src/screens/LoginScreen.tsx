@@ -16,39 +16,20 @@ import { SafeScreen } from '../components/layout/SafeScreen';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../store/useLanguageStore';
 import { colors, layout, spacing, typography, shadows } from '../theme/theme';
+import { GoogleIcon } from '../components/icons/GoogleIcon';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
-
-const DEMO_ACCOUNTS = [
-  {
-    code: '21IT001',
-    name: 'Nguyễn Văn A',
-    email: 'anv.21it@vku.udn.vn',
-    password: 'password123',
-  },
-  {
-    code: '21IT002',
-    name: 'Trần Thị B',
-    email: 'btt.21it@vku.udn.vn',
-    password: 'password123',
-  },
-  {
-    code: '21IT003',
-    name: 'Lê Văn C',
-    email: 'clv.21it@vku.udn.vn',
-    password: 'password123',
-  },
-];
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language, setLanguage } = useTranslation();
   const login = useAuthStore((state) => state.login);
+  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
   const isLoading = useAuthStore((state) => state.isLoading);
   const authError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
 
-  const [email, setEmail] = useState('anv.21it@vku.udn.vn');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -73,11 +54,12 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleFillDemo = (demo: (typeof DEMO_ACCOUNTS)[0]) => {
-    setEmail(demo.email);
-    setPassword('123456');
-    setLocalError(null);
-    clearError();
+  const handleGoogleSelect = async () => {
+    setLocalError(
+      language === 'vi'
+        ? 'Tính năng Google OAuth chưa được kích hoạt trên Supabase. Bạn vui lòng sử dụng Email để Đăng nhập hoặc bấm Đăng ký ngay bên dưới.'
+        : 'Google OAuth is not enabled on Supabase. Please sign in with your email or register an account below.'
+    );
   };
 
   const displayError = localError || authError;
@@ -221,6 +203,28 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
+            {/* Divider OR */}
+            <View style={styles.orDividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.orText}>{t('orDivider')}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign-In Button */}
+            <TouchableOpacity
+              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
+              onPress={() => handleGoogleSelect()}
+              disabled={isLoading}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('loginWithGoogle')}
+            >
+              <View style={styles.googleIconContainer}>
+                <GoogleIcon size={18} />
+              </View>
+              <Text style={styles.googleButtonText}>{t('loginWithGoogle')}</Text>
+            </TouchableOpacity>
+
             {/* Register Navigation Link */}
             <View style={styles.switchAuthRow}>
               <Text style={styles.switchAuthText}>{t('noAccountPrompt')} </Text>
@@ -232,37 +236,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               >
                 <Text style={styles.switchAuthLink}>{t('registerNow')}</Text>
               </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Quick Demo Accounts Helper (For Evaluators & Teachers) */}
-          <View style={styles.demoSection}>
-            <View style={styles.demoHeader}>
-              <Text style={styles.demoTitle}>💡 {t('quickDemoAccounts')}</Text>
-              <Text style={styles.demoSubtitle}>{t('quickLoginHint')}</Text>
-            </View>
-
-            <View style={styles.demoChipsRow}>
-              {DEMO_ACCOUNTS.map((item) => {
-                const isSelected = email === item.email;
-                return (
-                  <TouchableOpacity
-                    key={item.code}
-                    style={[styles.demoChip, isSelected && styles.demoChipActive]}
-                    onPress={() => handleFillDemo(item)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Fill demo credentials for ${item.name}`}
-                  >
-                    <Text style={[styles.demoChipCode, isSelected && styles.demoChipCodeActive]}>
-                      {item.code}
-                    </Text>
-                    <Text style={[styles.demoChipName, isSelected && styles.demoChipNameActive]}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
             </View>
           </View>
         </ScrollView>
@@ -440,6 +413,42 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  orDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  orText: {
+    fontSize: 10,
+    fontWeight: typography.weights.bold,
+    color: colors.textLight,
+    paddingHorizontal: spacing.sm,
+    letterSpacing: 1,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: layout.buttonHeight,
+    borderRadius: layout.radii.md,
+    ...shadows.subtle,
+  },
+  googleIconContainer: {
+    marginRight: spacing.sm,
+  },
+  googleButtonText: {
+    color: colors.textPrimary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
   buttonDisabled: {
     opacity: 0.65,
   },
@@ -467,64 +476,5 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
     color: colors.primary,
-  },
-  demoSection: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: layout.radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  demoHeader: {
-    marginBottom: spacing.sm,
-  },
-  demoTitle: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
-    color: colors.textPrimary,
-  },
-  demoSubtitle: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  demoChipsRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    justifyContent: 'space-between',
-  },
-  demoChip: {
-    flex: 1,
-    backgroundColor: colors.surfaceSubtle,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: layout.radii.sm,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    alignItems: 'center',
-    minHeight: 46,
-    justifyContent: 'center',
-  },
-  demoChipActive: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
-  },
-  demoChipCode: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.extrabold,
-    color: colors.textPrimary,
-  },
-  demoChipCodeActive: {
-    color: colors.primaryDark,
-  },
-  demoChipName: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  demoChipNameActive: {
-    color: colors.primaryDark,
-    fontWeight: typography.weights.semibold,
   },
 });

@@ -61,6 +61,7 @@ Adhering strictly to the **VKU Cross-Platform Mobile App Development curriculum 
 | **Navigation** | React Navigation 7 (Stack + Tabs) | Native-stack and bottom tabs routing |
 | **Server State** | TanStack Query 5 (`@tanstack/react-query`) | API caching, stale-while-revalidate & refetch |
 | **Client State** | Zustand 5 + `persist` middleware | Volatile UI state, active holds & session |
+| **Authentication** | Supabase Auth + Google OAuth 2.0 | Real email registration, JWT session, Google SSO |
 | **Local Storage** | `@react-native-async-storage/async-storage` | Offline state persistence (`vku-booking-storage`) |
 | **Animations** | React Native Reanimated (`react-native-reanimated`) | 60/120 FPS UI-thread layout & spring animations |
 | **Backend / DB** | Supabase (PostgreSQL 15+) | RLS, Advisory Locking & Realtime channels |

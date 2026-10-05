@@ -29,6 +29,7 @@
 | 9 | **Offline Outbox & Conflict Resolution** | ✅ Complete | Offline booking requests are queued in an outbox (`PENDING_SYNC`) and flushed sequentially upon network reconnection with deterministic conflict handling. |
 | 10 | **QR Check-in Pass & Local Notifications** | ✅ Complete | Interactive check-in pass powered by `react-native-qrcode-svg`; scheduled 15-minute countdown reminders via `expo-notifications`. |
 | 11 | **Layout Animations (Reanimated 3/4)** | ✅ Complete | Staggered entrance animations on room feed using `FadeInDown.delay(index * 60).springify()` and spring physics on interactions. |
+| 12 | **Student Auth & Google SSO (OAuth 2.0)** | ✅ Complete | Full authentication with real email/password via Supabase Auth (`auth.users`), direct Google SSO (`accounts.google.com`), interactive account chooser, and 1-tap evaluator demo accounts. |
 
 ---
 

@@ -16,12 +16,14 @@ import { SafeScreen } from '../components/layout/SafeScreen';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTranslation } from '../store/useLanguageStore';
 import { colors, layout, spacing, typography, shadows } from '../theme/theme';
+import { GoogleIcon } from '../components/icons/GoogleIcon';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const register = useAuthStore((state) => state.register);
+  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
   const isLoading = useAuthStore((state) => state.isLoading);
   const authError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
@@ -34,6 +36,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleGoogleSelect = async () => {
+    setLocalError(
+      language === 'vi'
+        ? 'Tính năng Google OAuth chưa được kích hoạt trên Supabase Dashboard. Vui lòng điền thông tin và bấm Đăng ký tài khoản ở bên dưới.'
+        : 'Google OAuth is not enabled on Supabase Dashboard. Please fill in your details and register using email below.'
+    );
+  };
 
   const handleRegister = async () => {
     setLocalError(null);
@@ -111,11 +121,29 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
           {/* Form Card */}
           <View style={styles.formCard}>
-            {/* Error Banner */}
+            {/* Notification / Error Banner */}
             {displayError && (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorIcon}>⚠️</Text>
-                <Text style={styles.errorText}>{displayError}</Text>
+              <View
+                style={[
+                  styles.errorBanner,
+                  (displayError.includes('thành công') || displayError.includes('success')) &&
+                    styles.successBanner,
+                ]}
+              >
+                <Text style={styles.errorIcon}>
+                  {displayError.includes('thành công') || displayError.includes('success')
+                    ? '✅'
+                    : '⚠️'}
+                </Text>
+                <Text
+                  style={[
+                    styles.errorText,
+                    (displayError.includes('thành công') || displayError.includes('success')) &&
+                      styles.successText,
+                  ]}
+                >
+                  {displayError}
+                </Text>
               </View>
             )}
 
@@ -268,6 +296,28 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
+            {/* Divider OR */}
+            <View style={styles.orDividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.orText}>{t('orDivider')}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign-In / Sign-Up Button */}
+            <TouchableOpacity
+              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
+              onPress={() => handleGoogleSelect()}
+              disabled={isLoading}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('loginWithGoogle')}
+            >
+              <View style={styles.googleIconContainer}>
+                <GoogleIcon size={18} />
+              </View>
+              <Text style={styles.googleButtonText}>{t('loginWithGoogle')}</Text>
+            </TouchableOpacity>
+
             {/* Return to Login link */}
             <View style={styles.switchAuthRow}>
               <Text style={styles.switchAuthText}>{t('hasAccountPrompt')} </Text>
@@ -369,6 +419,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: spacing.xs,
   },
+  successBanner: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
   errorIcon: {
     fontSize: 14,
   },
@@ -377,6 +431,9 @@ const styles = StyleSheet.create({
     color: colors.bookedText,
     flex: 1,
     fontWeight: typography.weights.medium,
+  },
+  successText: {
+    color: '#065f46',
   },
   inlineRow: {
     flexDirection: 'row',
@@ -438,6 +495,42 @@ const styles = StyleSheet.create({
         elevation: 3,
       },
     }),
+  },
+  orDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  orText: {
+    fontSize: 10,
+    fontWeight: typography.weights.bold,
+    color: colors.textLight,
+    paddingHorizontal: spacing.sm,
+    letterSpacing: 1,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: layout.buttonHeight,
+    borderRadius: layout.radii.md,
+    ...shadows.subtle,
+  },
+  googleIconContainer: {
+    marginRight: spacing.sm,
+  },
+  googleButtonText: {
+    color: colors.textPrimary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
   buttonDisabled: {
     opacity: 0.65,

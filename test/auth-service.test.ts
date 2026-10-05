@@ -157,6 +157,33 @@ async function runAuthTests() {
   console.log('- Verified user and session reset to null on logout');
   console.log('✅ TEST 6 PASSED: Demo account switching and logout flow verified.\n');
 
+  // TEST 7: Google SSO login with pre-seeded and custom email
+  console.log('TEST 7: Testing Google SSO authentication (Google / Gmail Sign-In)...');
+  // 7a. Pre-seeded account via Google SSO
+  const googleResA = await useAuthStore.getState().loginWithGoogle('anv.21it@vku.udn.vn');
+  if (!googleResA.success) {
+    throw new Error('❌ TEST 7a FAILED: Google SSO login for pre-seeded account failed.');
+  }
+  const googleUserA = useAuthStore.getState().user;
+  if (!googleUserA || googleUserA.studentCode !== '21IT001') {
+    throw new Error('❌ TEST 7a FAILED: Google SSO user code mismatch.');
+  }
+  console.log(`- Google SSO login successful: ${googleUserA.fullName} (${googleUserA.email})`);
+
+  // 7b. Custom VKU Google account auto-provisioning
+  await useAuthStore.getState().logout();
+  const googleResB = await useAuthStore.getState().loginWithGoogle('camle.21it@vku.udn.vn');
+  if (!googleResB.success) {
+    throw new Error('❌ TEST 7b FAILED: Google SSO login for custom email failed.');
+  }
+  const googleUserB = useAuthStore.getState().user;
+  if (!googleUserB || googleUserB.email !== 'camle.21it@vku.udn.vn') {
+    throw new Error('❌ TEST 7b FAILED: Google SSO custom user email mismatch.');
+  }
+  console.log(`- Google SSO custom account auto-provisioned: ${googleUserB.fullName} (${googleUserB.studentCode})`);
+  await useAuthStore.getState().logout();
+  console.log('✅ TEST 7 PASSED: Google SSO login & auto-provisioning verified.\n');
+
   console.log('========================================================');
   console.log('ALL AUTH INTEGRATION & NAVIGATION TESTS PASSED! 🎉');
   console.log('========================================================');

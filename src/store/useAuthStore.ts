@@ -61,6 +61,7 @@ export interface AuthState {
   // Actions
   initialize: () => Promise<void>;
   login: (params: SignInParams) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (email?: string) => Promise<{ success: boolean; error?: string }>;
   register: (params: SignUpParams) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   switchDemoAccount: (student: {
@@ -85,6 +86,18 @@ export const useAuthStore = create<AuthState>()(
       initialize: async () => {
         set({ isLoading: true });
         try {
+          // Listen to background auth state changes (e.g. Google OAuth redirect on web)
+          authService.onAuthStateChange((newUser) => {
+            if (newUser) {
+              set({ user: newUser, isInitialized: true, isLoading: false, error: null });
+              useBookingStore.getState().switchStudent({
+                id: newUser.id,
+                name: newUser.fullName,
+                code: newUser.studentCode,
+              });
+            }
+          });
+
           const delayPromise =
             typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
               ? Promise.resolve()
@@ -102,18 +115,7 @@ export const useAuthStore = create<AuthState>()(
               code: session.user.studentCode,
             });
           } else {
-            // Check if we have persisted user in state
-            const currentUser = get().user;
-            if (currentUser) {
-              set({ isInitialized: true, isLoading: false });
-              useBookingStore.getState().switchStudent({
-                id: currentUser.id,
-                name: currentUser.fullName,
-                code: currentUser.studentCode,
-              });
-            } else {
-              set({ user: null, session: null, isInitialized: true, isLoading: false });
-            }
+            set({ user: null, session: null, isInitialized: true, isLoading: false });
           }
         } catch (e: any) {
           console.warn('Auth initialization error:', e);
@@ -148,6 +150,41 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (e: any) {
           const errorMsg = e?.message || 'Lỗi kết nối khi đăng nhập';
+          set({ isLoading: false, error: errorMsg });
+          return { success: false, error: errorMsg };
+        }
+      },
+
+      loginWithGoogle: async (email?: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const res = await authService.signInWithGoogle(email);
+          if (res.success && res.user) {
+            set({
+              user: res.user,
+              session: res.session || null,
+              isLoading: false,
+              error: null,
+            });
+
+            useBookingStore.getState().switchStudent({
+              id: res.user.id,
+              name: res.user.fullName,
+              code: res.user.studentCode,
+            });
+
+            return { success: true };
+          } else if (res.success && !res.user) {
+            // Browser is redirecting to accounts.google.com
+            set({ isLoading: false, error: null });
+            return { success: true };
+          } else {
+            const errorMsg = res.error || 'Đăng nhập Google không thành công';
+            set({ isLoading: false, error: errorMsg });
+            return { success: false, error: errorMsg };
+          }
+        } catch (e: any) {
+          const errorMsg = e?.message || 'Lỗi kết nối khi đăng nhập Google';
           set({ isLoading: false, error: errorMsg });
           return { success: false, error: errorMsg };
         }
@@ -197,6 +234,7 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
+          await useBookingStore.getState().clearAllStorageAndReset();
         }
       },
 

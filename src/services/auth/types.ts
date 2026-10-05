@@ -9,6 +9,7 @@ import {
 export interface IAuthService {
   signUp(params: SignUpParams): Promise<AuthResult>;
   signIn(params: SignInParams): Promise<AuthResult>;
+  signInWithGoogle(email?: string): Promise<AuthResult>;
   signOut(): Promise<{ success: boolean; error?: string }>;
   getCurrentUser(): Promise<AuthUser | null>;
   getSession(): Promise<AuthSession | null>;
