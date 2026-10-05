@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { QueryProvider } from './src/providers/QueryProvider';
 import { notificationService } from './src/services/notificationService';
 import { syncService } from './src/services/syncService';
 
@@ -17,10 +18,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
-      <RootNavigator />
-      <AppDialog />
-      <NotificationBanner />
+      <QueryProvider>
+        <StatusBar style="auto" />
+        <RootNavigator />
+        <AppDialog />
+        <NotificationBanner />
+      </QueryProvider>
     </SafeAreaProvider>
   );
 }

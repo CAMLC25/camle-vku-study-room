@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
+import Animated, { FadeInDown, FadeOutUp, Layout } from 'react-native-reanimated';
 import { Room } from '../types/room';
 import { useTranslation } from '../store/useLanguageStore';
 
@@ -21,6 +22,8 @@ interface RoomCardProps {
   room: Room;
   onPress: (roomId: string) => void;
   isAvailableNow?: boolean;
+  index?: number;
+  style?: any;
 }
 
 const getEquipmentIcon = (eq: string): string => {
@@ -33,7 +36,7 @@ const getEquipmentIcon = (eq: string): string => {
 };
 
 export const RoomCard = React.memo<RoomCardProps>(
-  ({ room, onPress, isAvailableNow = true }) => {
+  ({ room, onPress, isAvailableNow = true, index = 0, style }) => {
     const { t } = useTranslation();
     const [imgUri, setImgUri] = useState<string>(room.photoUrl || DEFAULT_ROOM_PHOTO);
 
@@ -42,7 +45,13 @@ export const RoomCard = React.memo<RoomCardProps>(
     }, [room.photoUrl]);
 
     return (
-      <TouchableOpacity
+      <Animated.View
+        entering={FadeInDown.delay(Math.min(index * 60, 480)).springify()}
+        exiting={FadeOutUp.duration(200)}
+        layout={Layout.springify()}
+        style={style}
+      >
+        <TouchableOpacity
         style={styles.card}
         activeOpacity={0.75}
         onPress={() => onPress(room.id)}
@@ -129,6 +138,7 @@ export const RoomCard = React.memo<RoomCardProps>(
           </View>
         </View>
       </TouchableOpacity>
+    </Animated.View>
     );
   },
   (prevProps, nextProps) => {
@@ -137,7 +147,8 @@ export const RoomCard = React.memo<RoomCardProps>(
       prevProps.room.name === nextProps.room.name &&
       prevProps.room.capacity === nextProps.room.capacity &&
       prevProps.room.equipment.length === nextProps.room.equipment.length &&
-      prevProps.isAvailableNow === nextProps.isAvailableNow
+      prevProps.isAvailableNow === nextProps.isAvailableNow &&
+      prevProps.index === nextProps.index
     );
   }
 );

@@ -26,6 +26,8 @@ import { useTranslation } from '../store/useLanguageStore';
 import { getTodayDateString, getCurrentOrNextSlotIndex } from '../utils/date';
 import { SlotIndex } from '../types/slot';
 import { colors, layout, spacing, typography } from '../theme/theme';
+import { useRooms } from '../hooks/useRooms';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Rooms'>,
@@ -35,14 +37,13 @@ type Props = CompositeScreenProps<
 export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
   const { t, language } = useTranslation();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const { columns, cardWidth, isTablet } = useResponsiveLayout();
+  const isDesktop = width >= 768 || isTablet;
+
   // Narrow Zustand selectors (no whole-store subscriptions)
   const rooms = useBookingStore((state) => state.rooms);
-  const isLoading = useBookingStore((state) => state.isRoomsLoading);
-  const error = useBookingStore((state) => state.roomsError);
   const filters = useBookingStore((state) => state.filters);
   const availabilityCache = useBookingStore((state) => state.availabilityCache);
-  const fetchRooms = useBookingStore((state) => state.fetchRooms);
   const setFilters = useBookingStore((state) => state.setFilters);
   const resetFilters = useBookingStore((state) => state.resetFilters);
 
@@ -50,9 +51,25 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
   const todayStr = useMemo(() => getTodayDateString(), []);
   const currentSlot = useMemo(() => getCurrentOrNextSlotIndex(), []);
 
+  // TanStack Query for server state caching & background sync (Week 6, Slide 17-18)
+  const {
+    data: serverRooms,
+    isLoading: isQueryLoading,
+    isError: isQueryError,
+    error: queryError,
+    refetch,
+  } = useRooms(filters.building);
+
+  // Synchronize server state to Zustand store cache
   useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+    if (serverRooms && serverRooms.length > 0) {
+      useBookingStore.setState({
+        rooms: serverRooms,
+        isRoomsLoading: false,
+        roomsError: null,
+      });
+    }
+  }, [serverRooms]);
 
   const handleRoomPress = useCallback(
     (roomId: string) => {
@@ -126,14 +143,16 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
 
   // Optimized FlatList renderItem & keyExtractor with useCallback
   const renderItem = useCallback(
-    ({ item }: { item: Room }) => (
+    ({ item, index }: { item: Room; index: number }) => (
       <RoomCard
         room={item}
+        index={index}
         onPress={handleRoomPress}
         isAvailableNow={isRoomAvailableNow(item.id)}
+        style={columns > 1 ? { width: cardWidth } : undefined}
       />
     ),
-    [handleRoomPress, isRoomAvailableNow]
+    [handleRoomPress, isRoomAvailableNow, columns, cardWidth]
   );
 
   const keyExtractor = useCallback((item: Room) => item.id, []);
@@ -214,30 +233,32 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
           )}
 
           {/* Content Area */}
-          {isLoading && rooms.length === 0 ? (
+          {isQueryLoading && rooms.length === 0 ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color="#0284c7" />
               <Text style={styles.loadingText}>{t('loading')}</Text>
             </View>
-          ) : error && rooms.length === 0 ? (
+          ) : isQueryError && rooms.length === 0 ? (
             <View style={styles.centerContainer}>
               <Text style={styles.errorTitle}>
                 {language === 'vi' ? 'Không thể tải danh sách phòng' : 'Unable to Load Rooms'}
               </Text>
-              <Text style={styles.errorSubtitle}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={fetchRooms}>
+              <Text style={styles.errorSubtitle}>
+                {queryError?.message || (language === 'vi' ? 'Đã có lỗi xảy ra' : 'An error occurred')}
+              </Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
                 <Text style={styles.retryButtonText}>{t('refresh')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <FlatList
-              key={isDesktop ? 'desktop-grid-2' : 'mobile-list-1'}
+              key={columns}
               data={filteredRooms}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
-              numColumns={isDesktop ? 2 : 1}
-              columnWrapperStyle={isDesktop ? styles.columnWrapper : undefined}
-              getItemLayout={isDesktop ? undefined : getItemLayout}
+              numColumns={columns}
+              columnWrapperStyle={columns > 1 ? styles.columnWrapper : undefined}
+              getItemLayout={columns === 1 ? getItemLayout : undefined}
               contentContainerStyle={[
                 styles.listContent,
                 isDesktop && styles.listContentDesktop,
@@ -252,8 +273,8 @@ export const RoomListScreen: React.FC<Props> = ({ navigation }) => {
               removeClippedSubviews={Platform.OS === 'android'}
               refreshControl={
                 <RefreshControl
-                  refreshing={isLoading}
-                  onRefresh={fetchRooms}
+                  refreshing={isQueryLoading}
+                  onRefresh={refetch}
                   tintColor="#0284c7"
                   colors={['#0284c7']}
                 />
